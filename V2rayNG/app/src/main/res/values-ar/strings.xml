@@ -20,7 +20,7 @@
     <string name="toast_services_failure">فشل بدء الخدمات</string>
 
     <!--ServerActivity-->
-    <string name="title_server">ملف التكوين</string>
+    <string name="title_server">التكوين v2plus</string>
     <string name="menu_item_add_config">إضافة تكوين</string>
     <string name="menu_item_save_config">حفظ التكوين</string>
     <string name="menu_item_del_config">حذف التكوين</string>
