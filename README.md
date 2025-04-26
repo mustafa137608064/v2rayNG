@@ -16,7 +16,7 @@ A V2Ray client for Android, support [Xray core](https://github.com/XTLS/Xray-cor
 ### Telegram Channel
 [github_2dust](https://t.me/github_2dust)
 
-[String (App Name)]([https://t.me/github_2dust](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/res/values/strings.xml))
+[App Name](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/res/values/strings.xml)
 
 ### Usage
 
