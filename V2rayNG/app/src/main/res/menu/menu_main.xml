@@ -10,7 +10,7 @@
     <!-- <item
         android:icon="@drawable/ic_add_24dp"
         android:title="@string/menu_item_add_config"
-        app:showAsAction="ifRoom"> -->
+        app:showAsAction="ifRoom">
         <menu>
             <item
                 android:id="@+id/import_qrcode"
@@ -57,7 +57,7 @@
                 android:title="@string/menu_item_import_config_manually_hysteria2"
                 app:showAsAction="never" />
         </menu>
-    </item>
+    </item> -->
     <item
         android:id="@+id/service_restart"
         android:title="@string/title_service_restart"
