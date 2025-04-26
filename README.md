@@ -17,7 +17,7 @@ A V2Ray client for Android, support [Xray core](https://github.com/XTLS/Xray-cor
 [App Name](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/res/values/strings.xml)
 
 
-[App Name](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/res/values/strings.xml)
+[Package Name](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/res/values/strings.xml)
 
 ### Usage
 
