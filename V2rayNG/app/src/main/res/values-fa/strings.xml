@@ -20,7 +20,7 @@
     <string name="toast_services_failure">شروع خدمات با موفقیت انجام نشد!</string>
 
     <!--ServerActivity-->
-    <string name="title_server">فایل کانفیگ</string>
+    <string name="title_server">کانفیگ اختصاصی v2plus</string>
     <string name="menu_item_add_config">افزودن کانفیگ</string>
     <string name="menu_item_save_config">ذخیره کانفیگ</string>
     <string name="menu_item_del_config">حذف کانفیگ</string>
