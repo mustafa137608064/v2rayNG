@@ -26,7 +26,7 @@
             android:title="@string/title_settings" /> -->
         <item
         android:id="@+id/nav_telegram_channel"
-        android:icon="@drawable/ic_telegram"
+        android:icon="@drawable/ic_telegram_24dp"
         android:title="Telegram Channel" />
     </group>
 
