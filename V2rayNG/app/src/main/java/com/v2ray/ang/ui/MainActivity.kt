@@ -130,6 +130,23 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         title = getString(R.string.title_server)
         setSupportActionBar(binding.toolbar)
 
+        /// Telegram Channel کانال تلگرام
+    val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
+    val navView: NavigationView = findViewById(R.id.nav_view)
+
+    navView.setNavigationItemSelectedListener { menuItem ->
+        when (menuItem.itemId) {
+            R.id.nav_telegram_channel -> {
+                val telegramUrl = "https://t.me/YourChannelName" 
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
+                startActivity(intent)
+                drawerLayout.closeDrawer(GravityCompat.START)
+                true
+            }
+            else -> false
+        }
+    }
+
         binding.fab.setOnClickListener {
             if (mainViewModel.isRunning.value == true) {
                 V2RayServiceManager.stopVService(this)
@@ -675,18 +692,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         // Handle navigation view item clicks here.
         when (item.itemId) {
-            R.id.sub_setting -> requestSubSettingActivity.launch(Intent(this, SubSettingActivity::class.java))
-            R.id.per_app_proxy_settings -> startActivity(Intent(this, PerAppProxyActivity::class.java))
-            R.id.routing_setting -> requestSubSettingActivity.launch(Intent(this, RoutingSettingActivity::class.java))
-            R.id.user_asset_setting -> startActivity(Intent(this, UserAssetActivity::class.java))
-            R.id.settings -> startActivity(
-                Intent(this, SettingsActivity::class.java)
-                    .putExtra("isRunning", mainViewModel.isRunning.value == true)
-            )
+            //R.id.sub_setting -> requestSubSettingActivity.launch(Intent(this, SubSettingActivity::class.java))
+            //R.id.per_app_proxy_settings -> startActivity(Intent(this, PerAppProxyActivity::class.java))
+            //R.id.routing_setting -> requestSubSettingActivity.launch(Intent(this, RoutingSettingActivity::class.java))
+            //R.id.user_asset_setting -> startActivity(Intent(this, UserAssetActivity::class.java))
+            //R.id.settings -> startActivity(
+            //    Intent(this, SettingsActivity::class.java)
+            //        .putExtra("isRunning", mainViewModel.isRunning.value == true)
+            //)
 
-            R.id.promotion -> Utils.openUri(this, "${Utils.decode(AppConfig.APP_PROMOTION_URL)}?t=${System.currentTimeMillis()}")
-            R.id.logcat -> startActivity(Intent(this, LogcatActivity::class.java))
-            R.id.about -> startActivity(Intent(this, AboutActivity::class.java))
+            //R.id.promotion -> Utils.openUri(this, "${Utils.decode(AppConfig.APP_PROMOTION_URL)}?t=${System.currentTimeMillis()}")
+            //R.id.logcat -> startActivity(Intent(this, LogcatActivity::class.java))
+            //R.id.about -> startActivity(Intent(this, AboutActivity::class.java))
         }
 
         binding.drawerLayout.closeDrawer(GravityCompat.START)
@@ -694,27 +711,4 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 }
 
-    /// Telegram Channel کانال تلگرام
-    override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_main)
-
-    val toolbar: Toolbar = findViewById(R.id.toolbar)
-    setSupportActionBar(toolbar)
-
-    val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
-    val navView: NavigationView = findViewById(R.id.nav_view)
-
-    navView.setNavigationItemSelectedListener { menuItem ->
-        when (menuItem.itemId) {
-            R.id.nav_telegram_channel -> {
-                val telegramUrl = "https://t.me/YourChannelName" 
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
-                startActivity(intent)
-                drawerLayout.closeDrawer(GravityCompat.START)
-                true
-            }
-            else -> false
-        }
-    }
-}
+ 
