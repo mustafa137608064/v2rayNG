@@ -672,40 +672,45 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Handle navigation view item clicks here.
-        when (item.itemId) {
-            R.id.nav_telegram_channel -> {
+    when (item.itemId) {
+        R.id.nav_telegram_channel -> {
             val telegramUrl = "https://t.me/v2plus_vpn"
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
-            startActivity(intent)
-            R.id.nav_support_team -> {
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                toast("Cannot open URL: ${e.message}")
+            }
+        }
+        R.id.nav_support_team -> {
             val supportUrl = "https://support.com"
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(supportUrl))
-            startActivity(intent)
-            R.id.nav_check_update -> {
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                toast("Cannot open URL: ${e.message}")
+            }
+        }
+        R.id.nav_check_update -> {
             val updateUrl = "https://update.com"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updtadeUrl))
-            startActivity(intent)
-            R.id.nav_about_us -> {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                toast("Cannot open URL: ${e.message}")
+            }
+        }
+        R.id.nav_about_us -> {
             val aboutusUrl = "https://about.com"
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(aboutusUrl))
-            startActivity(intent)
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                toast("Cannot open URL: ${e.message}")
+            }
         }
-            //R.id.sub_setting -> requestSubSettingActivity.launch(Intent(this, SubSettingActivity::class.java))
-            //R.id.per_app_proxy_settings -> startActivity(Intent(this, PerAppProxyActivity::class.java))
-            //R.id.routing_setting -> requestSubSettingActivity.launch(Intent(this, RoutingSettingActivity::class.java))
-            //R.id.user_asset_setting -> startActivity(Intent(this, UserAssetActivity::class.java))
-            //R.id.settings -> startActivity(
-         //       Intent(this, SettingsActivity::class.java)
-            //        .putExtra("isRunning", mainViewModel.isRunning.value == true)
-          //  )
-
-       //     R.id.promotion -> Utils.openUri(this, "${Utils.decode(AppConfig.APP_PROMOTION_URL)}?t=${System.currentTimeMillis()}")
-        //    R.id.logcat -> startActivity(Intent(this, LogcatActivity::class.java))
-          //  R.id.about -> startActivity(Intent(this, AboutActivity::class.java))
-        }
-
-        binding.drawerLayout.closeDrawer(GravityCompat.START)
-        return true
     }
+    binding.drawerLayout.closeDrawer(GravityCompat.START)
+    return true
+}
 }
