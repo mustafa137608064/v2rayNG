@@ -289,28 +289,28 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         super.onPause()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
+    //override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        //menuInflater.inflate(R.menu.menu_main, menu)
 
-        val searchItem = menu.findItem(R.id.search_view)
-        if (searchItem != null) {
-            val searchView = searchItem.actionView as SearchView
-            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean = false
+       // val searchItem = menu.findItem(R.id.search_view)
+        //if (searchItem != null) {
+          //  val searchView = searchItem.actionView as SearchView
+         //   searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+             //   override fun onQueryTextSubmit(query: String?): Boolean = false
 
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    mainViewModel.filterConfig(newText.orEmpty())
-                    return false
-                }
-            })
+             //   override fun onQueryTextChange(newText: String?): Boolean {
+         //           mainViewModel.filterConfig(newText.orEmpty())
+              //      return false
+            //    }
+         //   })
 
-            searchView.setOnCloseListener {
-                mainViewModel.filterConfig("")
-                false
-            }
-        }
-        return super.onCreateOptionsMenu(menu)
-    }
+        //    searchView.setOnCloseListener {
+          //      mainViewModel.filterConfig("")
+          //      false
+        //    }
+     //   }
+//        return super.onCreateOptionsMenu(menu)
+  //  }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.import_qrcode -> {
