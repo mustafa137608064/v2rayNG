@@ -678,6 +678,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             val telegramUrl = "https://t.me/v2plus_vpn"
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
             startActivity(intent)
+            R.id.nav_support_team -> {
+            val supportUrl = "https://support.com"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(supportUrl))
+            startActivity(intent)
+            R.id.nav_check_update -> {
+            val updateUrl = "https://update.com"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updtadeUrl))
+            startActivity(intent)
+            R.id.nav_about_us -> {
+            val aboutusUrl = "https://about.com"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(aboutusUrl))
+            startActivity(intent)
         }
             //R.id.sub_setting -> requestSubSettingActivity.launch(Intent(this, SubSettingActivity::class.java))
             //R.id.per_app_proxy_settings -> startActivity(Intent(this, PerAppProxyActivity::class.java))
