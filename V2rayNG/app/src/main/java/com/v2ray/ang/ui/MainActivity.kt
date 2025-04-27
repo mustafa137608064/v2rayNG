@@ -309,7 +309,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 false
             }
         }
-        return super.onCreateOptionsMenu(menu)
+     //   return super.onCreateOptionsMenu(menu)
+        return false
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
