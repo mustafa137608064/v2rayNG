@@ -692,6 +692,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
     }
+}
 
     /// Telegram Channel کانال تلگرام
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -707,8 +708,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     navView.setNavigationItemSelectedListener { menuItem ->
         when (menuItem.itemId) {
             R.id.nav_telegram_channel -> {
-                // باز کردن لینک کانال تلگرام
-                val telegramUrl = "https://t.me/YourChannelName" // آدرس کانال خود را اینجا قرار دهید
+                val telegramUrl = "https://t.me/YourChannelName" 
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
                 startActivity(intent)
                 drawerLayout.closeDrawer(GravityCompat.START)
@@ -717,5 +717,4 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             else -> false
         }
     }
-}
 }
