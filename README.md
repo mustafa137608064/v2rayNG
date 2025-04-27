@@ -13,3 +13,5 @@ A V2Ray client for Android, support [Xray core](https://github.com/XTLS/Xray-cor
 [Strings-ar line23](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/res/values-ar/strings.xml)
 
 [Overflow Menu](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/res/menu/menu_main.xml)
+
+[Dot Menu Left line292-314](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/java/com/v2ray/ang/ui/MainActivity.kt)
