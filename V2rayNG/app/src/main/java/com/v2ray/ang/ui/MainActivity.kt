@@ -22,14 +22,13 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.tabs.TabLayout
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.AppConfig.Companion.VPN
+import com.v2ray.ang.AppConfig.VPN
 import com.v2ray.ang.R
 import com.v2ray.ang.databinding.ActivityMainBinding
 import com.v2ray.ang.dto.EConfigType
@@ -76,7 +75,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
     private var mItemTouchHelper: ItemTouchHelper? = null
-    private val mainViewModel: MainViewModel by viewModels()
+    val mainViewModel: MainViewModel by viewModels()
 
     // register activity result for requesting permission
     private val requestPermissionLauncher =
@@ -131,22 +130,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         title = getString(R.string.title_server)
         setSupportActionBar(binding.toolbar)
 
-        val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
-        val navView: NavigationView = findViewById(R.id.nav_view)
-
-        navView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.nav_telegram_channel -> {
-                    val telegramUrl = "https://t.me/YourChannelName" // آدرس کانال خود را اینجا قرار دهید
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
-                    startActivity(intent)
-                    drawerLayout.closeDrawer(GravityCompat.START)
-                    true
-                }
-                else -> false
-            }
-        }
-
         binding.fab.setOnClickListener {
             if (mainViewModel.isRunning.value == true) {
                 V2RayServiceManager.stopVService(this)
@@ -166,7 +149,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 setTestState(getString(R.string.connection_test_testing))
                 mainViewModel.testCurrentServerRealPing()
             } else {
-                // tv_test_state.text = getString(R.string.connection_test_fail)
+//                tv_test_state.text = getString(R.string.connection_test_fail)
             }
         }
 
@@ -252,6 +235,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     //toast(getString(R.string.migration_fail))
                 }
             }
+
         }
     }
 
@@ -303,6 +287,29 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     public override fun onPause() {
         super.onPause()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+
+        val searchItem = menu.findItem(R.id.search_view)
+        if (searchItem != null) {
+            val searchView = searchItem.actionView as SearchView
+            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean = false
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    mainViewModel.filterConfig(newText.orEmpty())
+                    return false
+                }
+            })
+
+            searchView.setOnCloseListener {
+                mainViewModel.filterConfig("")
+                false
+            }
+        }
+        return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
@@ -408,6 +415,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             true
         }
 
+
         else -> super.onOptionsItemSelected(item)
     }
 
@@ -420,6 +428,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         )
     }
 
+    /**
+     * import config from qrcode
+     */
     private fun importQRcode(): Boolean {
         val permission = Manifest.permission.CAMERA
         if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
@@ -431,7 +442,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return true
     }
 
-    private fun importClipboard(): Boolean {
+    /**
+     * import config from clipboard
+     */
+    private fun importClipboard()
+            : Boolean {
         try {
             val clipboard = Utils.getClipboard(this)
             importBatchConfig(clipboard)
@@ -471,6 +486,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
+    /**
+     * import config from local config file
+     */
     private fun importConfigLocal(): Boolean {
         try {
             showFileChooser()
@@ -481,6 +499,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return true
     }
 
+
+    /**
+     * import config from sub
+     */
     private fun importConfigViaSub(): Boolean {
         binding.pbWaiting.show()
 
@@ -528,7 +550,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do nothing
+                //do noting
             }
             .show()
     }
@@ -547,7 +569,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do nothing
+                //do noting
             }
             .show()
     }
@@ -566,7 +588,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do nothing
+                //do noting
             }
             .show()
     }
@@ -582,6 +604,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
+    /**
+     * show file chooser
+     */
     private fun showFileChooser() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "*/*"
@@ -601,6 +626,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
+    /**
+     * read content from uri
+     */
     private fun readContentFromUri(uri: Uri) {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
@@ -625,6 +653,15 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         binding.tvTestState.text = content
     }
 
+//    val mConnection = object : ServiceConnection {
+//        override fun onServiceDisconnected(name: ComponentName?) {
+//        }
+//
+//        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+//            sendMsg(AppConfig.MSG_REGISTER_CLIENT, "")
+//        }
+//    }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B) {
             moveTaskToBack(false)
@@ -633,14 +670,24 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return super.onKeyDown(keyCode, event)
     }
 
+
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        // Handle navigation view item clicks here.
         when (item.itemId) {
-            R.id.nav_telegram_channel -> {
-                val telegramUrl = "https://t.me/YourChannelName" // آدرس کانال خود را اینجا قرار دهید
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
-                startActivity(intent)
-            }
+            R.id.sub_setting -> requestSubSettingActivity.launch(Intent(this, SubSettingActivity::class.java))
+            R.id.per_app_proxy_settings -> startActivity(Intent(this, PerAppProxyActivity::class.java))
+            R.id.routing_setting -> requestSubSettingActivity.launch(Intent(this, RoutingSettingActivity::class.java))
+            R.id.user_asset_setting -> startActivity(Intent(this, UserAssetActivity::class.java))
+            R.id.settings -> startActivity(
+                Intent(this, SettingsActivity::class.java)
+                    .putExtra("isRunning", mainViewModel.isRunning.value == true)
+            )
+
+            R.id.promotion -> Utils.openUri(this, "${Utils.decode(AppConfig.APP_PROMOTION_URL)}?t=${System.currentTimeMillis()}")
+            R.id.logcat -> startActivity(Intent(this, LogcatActivity::class.java))
+            R.id.about -> startActivity(Intent(this, AboutActivity::class.java))
         }
+
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
     }
