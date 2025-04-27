@@ -289,8 +289,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         super.onPause()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
+    //override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        //menuInflater.inflate(R.menu.menu_main, menu)
 
         //val searchItem = menu.findItem(R.id.search_view)
         //if (searchItem != null) {
@@ -310,8 +310,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
           //  }
       //  }
      //   return super.onCreateOptionsMenu(menu)
-        return false
-    }
+        //return false
+   // }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.import_qrcode -> {
