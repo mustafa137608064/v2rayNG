@@ -18,3 +18,4 @@ A V2Ray client for Android, support [Xray core](https://github.com/XTLS/Xray-cor
 
 [Telegram Channel1](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/res/menu/menu_drawer.xml)
 [ - Telegram Channel2 add link](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/java/com/v2ray/ang/ui/MainActivity.kt)
+[ - Telegram Channel3 deactive unuse options onNavigationItemSelected](https://github.com/mustafa137608064/v2rayNG/blob/master/V2rayNG/app/src/main/java/com/v2ray/ang/ui/MainActivity.kt)
