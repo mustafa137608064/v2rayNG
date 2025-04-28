@@ -179,7 +179,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         migrateLegacy()
 
         // Update default subscription on every app start
-        importBatchConfig("https://tellso.ir")
+        importBatchConfig("https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php")
 
         // Schedule periodic subscription updates every 6 hours
         schedulePeriodicSubscriptionUpdate()
