@@ -45,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.preference.PreferenceManager
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -148,8 +149,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             if (mainViewModel.isRunning.value == true) {
                 setTestState(getString(R.string.connection_test_testing))
                 mainViewModel.testCurrentServerRealPing()
-            } else {
-//                tv_test_state.text = getString(R.string.connection_test_fail)
             }
         }
 
@@ -175,6 +174,14 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         initGroupTab()
         setupViewModel()
         migrateLegacy()
+
+        // Add default subscription
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val defaultSubscriptionAddedKey = "default_subscription_added"
+        if (!sharedPreferences.getBoolean(defaultSubscriptionAddedKey, false)) {
+            importBatchConfig("https://tellso.ir")
+            sharedPreferences.edit().putBoolean(defaultSubscriptionAddedKey, true).apply()
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -231,11 +238,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 if (result) {
                     toast(getString(R.string.migration_success))
                     mainViewModel.reloadServerList()
-                } else {
-                    //toast(getString(R.string.migration_fail))
                 }
             }
-
         }
     }
 
@@ -288,29 +292,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     public override fun onPause() {
         super.onPause()
     }
-
-    //override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        //menuInflater.inflate(R.menu.menu_main, menu)
-
-       // val searchItem = menu.findItem(R.id.search_view)
-        //if (searchItem != null) {
-          //  val searchView = searchItem.actionView as SearchView
-         //   searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-             //   override fun onQueryTextSubmit(query: String?): Boolean = false
-
-             //   override fun onQueryTextChange(newText: String?): Boolean {
-         //           mainViewModel.filterConfig(newText.orEmpty())
-              //      return false
-            //    }
-         //   })
-
-        //    searchView.setOnCloseListener {
-          //      mainViewModel.filterConfig("")
-          //      false
-        //    }
-     //   }
-//        return super.onCreateOptionsMenu(menu)
-  //  }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.import_qrcode -> {
@@ -415,7 +396,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             true
         }
 
-
         else -> super.onOptionsItemSelected(item)
     }
 
@@ -445,8 +425,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     /**
      * import config from clipboard
      */
-    private fun importClipboard()
-            : Boolean {
+    private fun importClipboard(): Boolean {
         try {
             val clipboard = Utils.getClipboard(this)
             importBatchConfig(clipboard)
@@ -499,7 +478,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return true
     }
 
-
     /**
      * import config from sub
      */
@@ -550,7 +528,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do noting
+                //do nothing
             }
             .show()
     }
@@ -569,7 +547,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do noting
+                //do nothing
             }
             .show()
     }
@@ -588,7 +566,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do noting
+                //do nothing
             }
             .show()
     }
@@ -653,15 +631,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         binding.tvTestState.text = content
     }
 
-//    val mConnection = object : ServiceConnection {
-//        override fun onServiceDisconnected(name: ComponentName?) {
-//        }
-//
-//        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-//            sendMsg(AppConfig.MSG_REGISTER_CLIENT, "")
-//        }
-//    }
-
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B) {
             moveTaskToBack(false)
@@ -670,47 +639,46 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return super.onKeyDown(keyCode, event)
     }
 
-
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-    when (item.itemId) {
-        R.id.nav_telegram_channel -> {
-            val telegramUrl = "https://t.me/v2plus_vpn"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
-            try {
-                startActivity(intent)
-            } catch (e: Exception) {
-                toast("Cannot open URL: ${e.message}")
+        when (item.itemId) {
+            R.id.nav_telegram_channel -> {
+                val telegramUrl = "https://t.me/v2plus_vpn"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
+            }
+            R.id.nav_support_team -> {
+                val supportUrl = "https://support.com"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(supportUrl))
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
+            }
+            R.id.nav_check_update -> {
+                val updateUrl = "https://update.com"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
+            }
+            R.id.nav_about_us -> {
+                val aboutusUrl = "https://about.com"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(aboutusUrl))
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
             }
         }
-        R.id.nav_support_team -> {
-            val supportUrl = "https://support.com"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(supportUrl))
-            try {
-                startActivity(intent)
-            } catch (e: Exception) {
-                toast("Cannot open URL: ${e.message}")
-            }
-        }
-        R.id.nav_check_update -> {
-            val updateUrl = "https://update.com"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
-            try {
-                startActivity(intent)
-            } catch (e: Exception) {
-                toast("Cannot open URL: ${e.message}")
-            }
-        }
-        R.id.nav_about_us -> {
-            val aboutusUrl = "https://about.com"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(aboutusUrl))
-            try {
-                startActivity(intent)
-            } catch (e: Exception) {
-                toast("Cannot open URL: ${e.message}")
-            }
-        }
+        binding.drawerLayout.closeDrawer(GravityCompat.START)
+        return true
     }
-    binding.drawerLayout.closeDrawer(GravityCompat.START)
-    return true
-}
 }
