@@ -179,7 +179,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         val defaultSubscriptionAddedKey = "default_subscription_added"
         if (!sharedPreferences.getBoolean(defaultSubscriptionAddedKey, false)) {
-            importBatchConfig("https://tellso.ir")
+            importBatchConfig("https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php")
             sharedPreferences.edit().putBoolean(defaultSubscriptionAddedKey, true).apply()
         }
 
