@@ -23,12 +23,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.tabs.TabLayout
 import com.v2ray.ang.AppConfig
@@ -36,7 +32,6 @@ import com.v2ray.ang.AppConfig.VPN
 import com.v2ray.ang.R
 import com.v2ray.ang.databinding.ActivityMainBinding
 import com.v2ray.ang.dto.EConfigType
-import com.v2ray.ang.dto.SubscriptionItem
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.handler.AngConfigManager
@@ -46,13 +41,10 @@ import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
 import com.v2ray.ang.service.V2RayServiceManager
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
-import com.v2ray.ang.worker.SubscriptionUpdateWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.UUID
-import java.util.concurrent.TimeUnit
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -182,27 +174,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         setupViewModel()
         migrateLegacy()
 
-        // Add default subscription on first run
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val defaultSubscriptionAddedKey = "default_subscription_added"
-        if (!sharedPreferences.getBoolean(defaultSubscriptionAddedKey, false)) {
-            val subscriptionId = UUID.randomUUID().toString()
-            MmkvManager.encodeSubscription(
-                subscriptionId,
-                SubscriptionItem().apply {
-                    remarks = "Default Subscription"
-                    url = "https://tellso.ir"
-                    enabled = true
-                }
-            )
-            sharedPreferences.edit().putBoolean(defaultSubscriptionAddedKey, true).apply()
-        }
-
-        // Update subscriptions on every app start
-        importConfigViaSub()
-
-        // Schedule periodic subscription update (every 6 hours)
-        schedulePeriodicSubscriptionUpdate()
+        // Update default subscription on every app start
+        importBatchConfig("https://tellso.ir")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -222,16 +195,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
         })
-    }
-
-    private fun schedulePeriodicSubscriptionUpdate() {
-        val workRequest = PeriodicWorkRequestBuilder<SubscriptionUpdateWorker>(6, TimeUnit.HOURS)
-            .build()
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "subscription_update_work",
-            ExistingPeriodicWorkPolicy.KEEP,
-            workRequest
-        )
     }
 
     @SuppressLint("NotifyDataSetChanged")
