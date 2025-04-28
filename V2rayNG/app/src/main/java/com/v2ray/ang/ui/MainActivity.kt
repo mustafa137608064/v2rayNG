@@ -45,7 +45,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.preference.PreferenceManager
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -175,13 +174,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         setupViewModel()
         migrateLegacy()
 
-        // Add default subscription
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        val defaultSubscriptionAddedKey = "default_subscription_added"
-        if (!sharedPreferences.getBoolean(defaultSubscriptionAddedKey, false)) {
-            importBatchConfig("https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php")
-            sharedPreferences.edit().putBoolean(defaultSubscriptionAddedKey, true).apply()
-        }
+        // Update default subscription on every app start
+        importBatchConfig("https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
