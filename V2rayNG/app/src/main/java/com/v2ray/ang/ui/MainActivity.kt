@@ -46,6 +46,7 @@ import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
 import com.v2ray.ang.service.V2RayServiceManager
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
+import com.v2ray.ang.worker.SubscriptionUpdateWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -604,7 +605,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun sortByTestResults() {
         binding.pbWaiting.show()
         lifecycleScope.launch(Dispatchers.IO) {
-            mainView personally.mainViewModel.sortByTestResults()
+            mainViewModel.sortByTestResults()
             launch(Dispatchers.Main) {
                 mainViewModel.reloadServerList()
                 binding.pbWaiting.hide()
