@@ -25,6 +25,9 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.tabs.TabLayout
 import com.v2ray.ang.AppConfig
@@ -45,6 +48,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -177,6 +181,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         // Update default subscription on every app start
         importBatchConfig("https://tellso.ir")
 
+        // Schedule periodic subscription updates every 6 hours
+        schedulePeriodicSubscriptionUpdate()
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 pendingAction = Action.POST_NOTIFICATIONS
@@ -195,6 +202,16 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
         })
+    }
+
+    private fun schedulePeriodicSubscriptionUpdate() {
+        val updateRequest = PeriodicWorkRequestBuilder<SubscriptionUpdateWorker>(6, TimeUnit.HOURS)
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "SubscriptionUpdateWork",
+            ExistingPeriodicWorkPolicy.KEEP,
+            updateRequest
+        )
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -278,9 +295,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    public override fun onResume() {
+    override fun onResume() {
         super.onResume()
         mainViewModel.reloadServerList()
+        // Update default subscription when app is resumed
+        importBatchConfig("https://tellso.ir")
     }
 
     public override fun onPause() {
