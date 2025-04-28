@@ -67,7 +67,6 @@ android {
         }
     }
 
-
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
@@ -131,7 +130,6 @@ android {
             useLegacyPackaging = true
         }
     }
-
 }
 
 dependencies {
@@ -188,6 +186,4 @@ dependencies {
     testImplementation(libs.org.mockito.mockito.inline)
     testImplementation(libs.mockito.kotlin)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
-
-implementation "androidx.work:work-runtime-ktx:2.9.0"
 }
