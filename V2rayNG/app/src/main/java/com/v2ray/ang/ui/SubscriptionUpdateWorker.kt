@@ -14,7 +14,7 @@ class SubscriptionUpdateWorker(appContext: Context, workerParams: WorkerParamete
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {
-            val defaultSubUrl = "https://tellso.ir"
+            val defaultSubUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php"
             val subId = MmkvManager.getSubscriptionIdByUrl(defaultSubUrl)
             if (subId != null) {
                 val viewModel = MainViewModel()
