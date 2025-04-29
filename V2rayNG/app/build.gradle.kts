@@ -153,7 +153,20 @@ dependencies {
 
     // Data and Storage Libraries
     implementation(libs.mmkv.static)
-    implementation(libs.gson)
+    implementation(libs.gson) // Gson از قبل وجود دارد، نیازی به اضافه کردن نیست
+
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.retrofit2:adapter-rxjava2:2.9.0")
+
+    // OkHttp
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
+
+    // RxJava
+    implementation("io.reactivex.rxjava2:rxjava:2.2.21")
+    implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
 
     // Reactive and Utility Libraries
     implementation(libs.kotlinx.coroutines.android)
@@ -174,7 +187,7 @@ dependencies {
 
     // Background Task Libraries
     implementation(libs.work.runtime.ktx)
-    implementation("androidx.work:work-runtime-ktx:2.8.1") // Added here
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
     implementation(libs.work.multiprocess)
 
     // Multidex Support
