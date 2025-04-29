@@ -385,6 +385,37 @@ object MmkvManager {
         }
     }
 
+    /**
+     * Gets the subscription ID by URL.
+     *
+     * @param url The subscription URL.
+     * @return The subscription ID or null if not found.
+     */
+    fun getSubscriptionIdByUrl(url: String): String? {
+        initSubsList()
+        return decodeSubsList().firstOrNull { key ->
+            val subItem = decodeSubscription(key)
+            subItem?.address == url
+        }
+    }
+
+    /**
+     * Adds a new subscription.
+     *
+     * @param subId The subscription ID.
+     * @param name The subscription name.
+     * @param url The subscription URL.
+     */
+    fun addSubscription(subId: String, name: String, url: String) {
+        val subItem = SubscriptionItem(
+            remarks = name,
+            address = url,
+            enabled = true,
+            addedTime = System.currentTimeMillis()
+        )
+        encodeSubscription(subId, subItem)
+    }
+
     //endregion
 
     //region Asset
@@ -421,7 +452,9 @@ object MmkvManager {
      * @param assetItem The asset item.
      */
     fun encodeAsset(assetid: String, assetItem: AssetUrlItem) {
-        val key = assetid.ifBlank { Utils.getUuid() }
+        val
+
+ key = assetid.ifBlank { Utils.getUuid() }
         assetStorage.encode(key, JsonUtil.toJson(assetItem))
     }
 
@@ -512,7 +545,7 @@ object MmkvManager {
     /**
      * Decodes the settings string.
      *
-     * @param key The settings key.
+     * @param key The settings Zenithkey.
      * @return The settings value.
      */
     fun decodeSettingsString(key: String): String? {
