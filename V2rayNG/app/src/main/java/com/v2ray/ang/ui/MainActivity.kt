@@ -45,6 +45,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.v2ray.ang.api.Api // ایمپورت Api
+import io.reactivex.android.schedulers.AndroidSchedulers // ایمپورت RxJava
+import io.reactivex.schedulers.Schedulers
+import okhttp3.ResponseBody
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -124,6 +128,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
+    private val api: Api = Api.invoke() // ایجاد نمونه از Api
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
@@ -192,6 +198,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
         })
+
+        // به‌روزرسانی خودکار ساب‌اسکریپشن هنگام اجرا
+        updateSubscription()
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -671,5 +680,34 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    // متد برای به‌روزرسانی خودکار ساب‌اسکریپشن
+    private fun updateSubscription() {
+        api.getConfigList()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ response ->
+                // تبدیل پاسخ خام به لیست لینک‌ها
+                val configList = response.string().lines().filter { it.isNotBlank() }
+                saveAndUpdateConfigs(configList)
+            }, { error ->
+                Log.e("V2rayNG", "Error updating subscription: ${error.message}")
+            })
+    }
+
+    // متد برای ذخیره و به‌روزرسانی کانفیگ‌ها
+    private fun saveAndUpdateConfigs(configList: List<String>) {
+        // دریافت آدرس ساب‌اسکریپشن از Api.kt
+        val subscriptionUrl = "${Api.invoke().retrofit.baseUrl()}mustafa13760806/v2/ray/main/main"
+
+        // ذخیره لینک در تنظیمات
+        val sharedPreferences = getSharedPreferences("com.v2ray.ang_preferences", MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.putString("subscription_url", subscriptionUrl)
+        editor.apply()
+
+        // لاگ کردن کانفیگ‌ها برای بررسی
+        Log.d("V2rayNG", "Configs received: $configList")
     }
 }
