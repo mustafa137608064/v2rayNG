@@ -32,6 +32,7 @@ import com.v2ray.ang.AppConfig.VPN
 import com.v2ray.ang.R
 import com.v2ray.ang.databinding.ActivityMainBinding
 import com.v2ray.ang.dto.EConfigType
+import com.v2ray.ang.dto.SubscriptionItem
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.handler.AngConfigManager
@@ -41,13 +42,13 @@ import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
 import com.v2ray.ang.service.V2RayServiceManager
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
+import com.v2ray.ang.api.Api
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.v2ray.ang.api.Api // ایمپورت Api
-import io.reactivex.android.schedulers.AndroidSchedulers // ایمپورت RxJava
-import io.reactivex.schedulers.Schedulers
 import okhttp3.ResponseBody
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -706,6 +707,33 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         val editor = sharedPreferences.edit()
         editor.putString("subscription_url", subscriptionUrl)
         editor.apply()
+
+        // ایجاد یک ساب‌اسکریپشن جدید
+        val subscriptionItem = SubscriptionItem().apply {
+            remarks = "Default Subscription"
+            url = subscriptionUrl
+            enabled = true
+        }
+
+        // اضافه کردن یا به‌روزرسانی ساب‌اسکریپشن در MmkvManager
+        val subscriptionId = MmkvManager.encodeSubscription(subscriptionItem)
+        if (subscriptionId != null) {
+            // به‌روزرسانی کانفیگ‌ها با استفاده از AngConfigManager
+            lifecycleScope.launch(Dispatchers.IO) {
+                val count = AngConfigManager.importBatchConfig(configList.joinToString("\n"), subscriptionId, false).first
+                launch(Dispatchers.Main) {
+                    if (count > 0) {
+                        toast(getString(R.string.title_import_config_count, count))
+                        mainViewModel.reloadServerList()
+                        initGroupTab() // به‌روزرسانی تب‌های گروه‌ها
+                    } else {
+                        toastError(R.string.toast_failure)
+                    }
+                }
+            }
+        } else {
+            toastError(R.string.toast_failure)
+        }
 
         // لاگ کردن کانفیگ‌ها برای بررسی
         Log.d("V2rayNG", "Configs received: $configList")
