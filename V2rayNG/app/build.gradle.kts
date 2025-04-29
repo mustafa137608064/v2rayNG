@@ -67,7 +67,6 @@ android {
         }
     }
 
-
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
@@ -131,7 +130,6 @@ android {
             useLegacyPackaging = true
         }
     }
-
 }
 
 dependencies {
@@ -176,6 +174,7 @@ dependencies {
 
     // Background Task Libraries
     implementation(libs.work.runtime.ktx)
+    implementation("androidx.work:work-runtime-ktx:2.8.1") // Added here
     implementation(libs.work.multiprocess)
 
     // Multidex Support
