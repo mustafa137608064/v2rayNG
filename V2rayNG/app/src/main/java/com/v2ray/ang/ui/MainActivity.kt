@@ -18,13 +18,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.tabs.TabLayout
 import com.v2ray.ang.AppConfig
@@ -45,6 +47,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -77,11 +81,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private var mItemTouchHelper: ItemTouchHelper? = null
     val mainViewModel: MainViewModel by viewModels()
 
-    // register activity result for requesting permission
+    // Register activity result for requesting permission
     private val requestPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
                 when (pendingAction) {
                     Action.IMPORT_QR_CODE_CONFIG ->
@@ -130,6 +132,15 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         title = getString(R.string.title_server)
         setSupportActionBar(binding.toolbar)
 
+        // Ensure default subscription exists
+        ensureDefaultSubscription()
+
+        // Update default subscription on app launch
+        updateDefaultSubscription()
+
+        // Schedule periodic subscription updates (every 6 hours)
+        schedulePeriodicSubscriptionUpdate()
+
         binding.fab.setOnClickListener {
             if (mainViewModel.isRunning.value == true) {
                 V2RayServiceManager.stopVService(this)
@@ -174,9 +185,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         setupViewModel()
         migrateLegacy()
 
-        // Update default subscription on every app start
-        importBatchConfig("https://tellso.ir")
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 pendingAction = Action.POST_NOTIFICATIONS
@@ -195,6 +203,54 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
         })
+    }
+
+    private fun ensureDefaultSubscription() {
+        val defaultSubUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php"
+        val subId = MmkvManager.getSubscriptionIdByUrl(defaultSubUrl)
+        if (subId == null) {
+            val newSubId = UUID.randomUUID().toString()
+            MmkvManager.addSubscription(newSubId, "Default Subscription", defaultSubUrl)
+            mainViewModel.subscriptionId = newSubId
+        } else {
+            mainViewModel.subscriptionId = subId
+        }
+    }
+
+    private fun updateDefaultSubscription() {
+        binding.pbWaiting.show()
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val count = mainViewModel.updateConfigViaSub(mainViewModel.subscriptionId)
+                withContext(Dispatchers.Main) {
+                    if (count > 0) {
+                        toast(getString(R.string.title_update_config_count, count))
+                        mainViewModel.reloadServerList()
+                        initGroupTab()
+                    } else {
+                        toastError(R.string.toast_failure)
+                    }
+                    binding.pbWaiting.hide()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    toastError(R.string.toast_failure)
+                    binding.pbWaiting.hide()
+                }
+                Log.e(AppConfig.TAG, "Failed to update default subscription", e)
+            }
+        }
+    }
+
+    private fun schedulePeriodicSubscriptionUpdate() {
+        val workRequest = PeriodicWorkRequestBuilder<SubscriptionUpdateWorker>(6, TimeUnit.HOURS)
+            .build()
+        WorkManager.getInstance(this)
+            .enqueueUniquePeriodicWork(
+                "SubscriptionUpdateWork",
+                ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+            )
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -402,9 +458,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         )
     }
 
-    /**
-     * import config from qrcode
-     */
     private fun importQRcode(): Boolean {
         val permission = Manifest.permission.CAMERA
         if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
@@ -416,9 +469,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return true
     }
 
-    /**
-     * import config from clipboard
-     */
     private fun importClipboard(): Boolean {
         try {
             val clipboard = Utils.getClipboard(this)
@@ -459,9 +509,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    /**
-     * import config from local config file
-     */
     private fun importConfigLocal(): Boolean {
         try {
             showFileChooser()
@@ -472,9 +519,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return true
     }
 
-    /**
-     * import config from sub
-     */
     private fun importConfigViaSub(): Boolean {
         binding.pbWaiting.show()
 
@@ -576,9 +620,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    /**
-     * show file chooser
-     */
     private fun showFileChooser() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "*/*"
@@ -598,9 +639,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    /**
-     * read content from uri
-     */
     private fun readContentFromUri(uri: Uri) {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
@@ -615,7 +653,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             } catch (e: Exception) {
                 Log.e(AppConfig.TAG, "Failed to read content from URI", e)
-            }
+            
         } else {
             requestPermissionLauncher.launch(permission)
         }
