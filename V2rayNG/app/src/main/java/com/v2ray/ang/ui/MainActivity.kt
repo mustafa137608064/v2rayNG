@@ -50,6 +50,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
+import com.google.gson.Gson
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -715,8 +716,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             enabled = true
         }
 
+        // تبدیل SubscriptionItem به JSON
+        val gson = Gson()
+        val subItemJson = gson.toJson(subscriptionItem)
+
         // اضافه کردن یا به‌روزرسانی ساب‌اسکریپشن در MmkvManager
-        val subscriptionId = MmkvManager.encodeSubscription(subscriptionItem)
+        val subscriptionId = MmkvManager.encodeSubscription(subItem = subItemJson)
         if (subscriptionId != null) {
             // به‌روزرسانی کانفیگ‌ها با استفاده از AngConfigManager
             lifecycleScope.launch(Dispatchers.IO) {
