@@ -716,9 +716,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
 
         // اضافه کردن یا به‌روزرسانی ساب‌اسکریپشن در MmkvManager
-        MmkvManager.putSubscription(subscriptionItem)
-
-        val subscriptionId = subscriptionItem.id
+        val subscriptionId = MmkvManager.encodeSubscription(subscriptionItem)
         if (subscriptionId != null) {
             // به‌روزرسانی کانفیگ‌ها با استفاده از AngConfigManager
             lifecycleScope.launch(Dispatchers.IO) {
