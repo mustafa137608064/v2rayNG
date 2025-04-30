@@ -15,6 +15,9 @@ interface Api {
     fun getConfigList(): Single<ResponseBody>
 
     companion object {
+        const val BASE_URL = "https://raw.githubusercontent.com/"
+        const val CONFIG_PATH = "mustafa13760806/v2/ray/main/main"
+
         operator fun invoke(): Api {
             val interceptor = HttpLoggingInterceptor()
             interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
@@ -27,7 +30,7 @@ interface Api {
                 .create()
 
             return Retrofit.Builder()
-                .baseUrl("https://raw.githubusercontent.com/")
+                .baseUrl(BASE_URL)
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .client(client)
