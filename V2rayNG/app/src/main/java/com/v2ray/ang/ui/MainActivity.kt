@@ -700,7 +700,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     // متد برای ذخیره و به‌روزرسانی کانفیگ‌ها
     private fun saveAndUpdateConfigs(configList: List<String>) {
         // دریافت آدرس ساب‌اسکریپشن از Api.kt
-        val subscriptionUrl = "${Api.invoke().retrofit.baseUrl()}mustafa13760806/v2/ray/main/main"
+        val subscriptionUrl = "${Api.BASE_URL}${Api.CONFIG_PATH}"
 
         // ذخیره لینک در تنظیمات
         val sharedPreferences = getSharedPreferences("com.v2ray.ang_preferences", MODE_PRIVATE)
@@ -716,11 +716,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
 
         // اضافه کردن یا به‌روزرسانی ساب‌اسکریپشن در MmkvManager
-        val subscriptionId = MmkvManager.encodeSubscription(subscriptionItem)
+        MmkvManager.putSubscription(subscriptionItem)
+
+        val subscriptionId = subscriptionItem.id
         if (subscriptionId != null) {
             // به‌روزرسانی کانفیگ‌ها با استفاده از AngConfigManager
             lifecycleScope.launch(Dispatchers.IO) {
-                val count = AngConfigManager.importBatchConfig(configList.joinToString("\n"), subscriptionId, false).first
+                val (count, _) = AngConfigManager.importBatchConfig(configList.joinToString("\n"), subscriptionId, false)
                 launch(Dispatchers.Main) {
                     if (count > 0) {
                         toast(getString(R.string.title_import_config_count, count))
