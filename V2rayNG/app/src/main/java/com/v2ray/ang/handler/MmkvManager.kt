@@ -292,32 +292,15 @@ object MmkvManager {
      * Initializes the subscription list.
      */
     private fun initSubsList() {
-     val subsList = decodeSubsList()
-     if (subsList.isNotEmpty()) {
-         return
-     }
-
-    // ── add one built-in subscription on first launch ──
-    // generate an ID for it
-    val defaultId = Utils.getUuid()
-    // construct the SubscriptionItem: change URL & remarks as you like
-    val defaultSub = SubscriptionItem(
-            remarks        = "MyCorp VPN",                                   // the display name
-        url            = ".githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php",// your subscription URL
-        enabled        = true,
-        autoUpdate     = true,
-       updateInterval = AppConfig.SUBSCRIPTION_DEFAULT_UPDATE_INTERVAL.toInt()
-)
-   subStorage.encode(defaultId, JsonUtil.toJson(defaultSub))
-    subsList.add(defaultId)
-
-     subStorage.allKeys()?.forEach { key ->
-         if (!subsList.contains(key)) {
-             subsList.add(key)
-         }
-     }
-     encodeSubsList(subsList)
-
+        val subsList = decodeSubsList()
+        if (subsList.isNotEmpty()) {
+            return
+        }
+        subStorage.allKeys()?.forEach { key ->
+            subsList.add(key)
+        }
+        encodeSubsList(subsList)
+    }
 
     /**
      * Decodes the subscriptions.
