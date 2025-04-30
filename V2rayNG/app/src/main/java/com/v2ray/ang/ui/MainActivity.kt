@@ -13,8 +13,9 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.registerForActivityResult
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
@@ -47,6 +48,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
+    companion object {
+        private const val DEFAULT_SUBSCRIPTION_URL = "https://tellso.ir"
+        private const val DEFAULT_SUBSCRIPTION_NAME = "Tellso"
+        private const val PREF_DEFAULT_SUB_ADDED = "pref_default_sub_added"
+    }
+
     private val binding by lazy {
         ActivityMainBinding.inflate(layoutInflater)
     }
@@ -170,9 +177,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         toggle.syncState()
         binding.navView.setNavigationItemSelectedListener(this)
 
+        migrateLegacy()
+        initDefaultSubscription()
+        autoUpdateSubscriptions()
         initGroupTab()
         setupViewModel()
-        migrateLegacy()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -192,6 +201,37 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
         })
+    }
+
+    private fun initDefaultSubscription() {
+        if (!MmkvManager.decodeSettingsBool(PREF_DEFAULT_SUB_ADDED, false)) {
+            mainViewModel.addSubscription(
+                DEFAULT_SUBSCRIPTION_NAME,
+                DEFAULT_SUBSCRIPTION_URL,
+                true
+            )
+            MmkvManager.encodeSettings(PREF_DEFAULT_SUB_ADDED, true)
+            initGroupTab()
+        }
+    }
+
+    private fun autoUpdateSubscriptions() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                mainViewModel.updateConfigViaSubAll()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        getString(R.string.subscriptions_updated_success),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    toastError(R.string.subscriptions_update_failed)
+                }
+            }
+        }
     }
 
     @SuppressLint("NotifyDataSetChanged")
