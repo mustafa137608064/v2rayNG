@@ -187,7 +187,6 @@ dependencies {
 
     // Background Task Libraries
     implementation(libs.work.runtime.ktx)
-    implementation("androidx.work:work-runtime-ktx:2.8.1")
     implementation(libs.work.multiprocess)
 
     // Multidex Support
