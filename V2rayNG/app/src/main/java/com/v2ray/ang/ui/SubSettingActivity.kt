@@ -10,7 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.v2ray.ang.R
-import com.v2ray.ang.api.Api // ایمپورت Api
+import com.v2ray.ang.api.Api
 import com.v2ray.ang.databinding.ActivitySubSettingBinding
 import com.v2ray.ang.dto.SubscriptionItem
 import com.v2ray.ang.extension.toastError
@@ -18,7 +18,7 @@ import com.v2ray.ang.extension.toastSuccess
 import com.v2ray.ang.handler.AngConfigManager
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
-import io.reactivex.android.schedulers.AndroidSchedulers // ایمپورت RxJava
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -30,7 +30,7 @@ class SubSettingActivity : BaseActivity() {
     var subscriptions: List<Pair<String, SubscriptionItem>> = listOf()
     private val adapter by lazy { SubSettingRecyclerAdapter(this) }
     private var mItemTouchHelper: ItemTouchHelper? = null
-    private val api: Api = Api.invoke() // ایجاد نمونه از Api
+    private val api: Api = Api.invoke()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,7 +111,7 @@ class SubSettingActivity : BaseActivity() {
     // متد برای ذخیره و به‌روزرسانی کانفیگ‌ها
     private fun saveAndUpdateConfigs(configList: List<String>) {
         // دریافت آدرس ساب‌اسکریپشن از Api.kt
-        val subscriptionUrl = "${Api.invoke().retrofit.baseUrl()}mustafa13760806/v2/ray/main/main"
+        val subscriptionUrl = "${Api.BASE_URL}${Api.CONFIG_PATH}"
 
         // ذخیره لینک در تنظیمات
         val subscriptionItem = SubscriptionItem().apply {
@@ -121,11 +121,13 @@ class SubSettingActivity : BaseActivity() {
         }
 
         // اضافه کردن یا به‌روزرسانی ساب‌اسکریپشن در MmkvManager
-        val subscriptionId = MmkvManager.encodeSubscription(subscriptionItem)
+        MmkvManager.putSubscription(subscriptionItem)
+
+        val subscriptionId = subscriptionItem.id
         if (subscriptionId != null) {
             // به‌روزرسانی کانفیگ‌ها با استفاده از AngConfigManager
             lifecycleScope.launch(Dispatchers.IO) {
-                val count = AngConfigManager.importBatchConfig(configList.joinToString("\n"), subscriptionId, false).first
+                val (count, _) = AngConfigManager.importBatchConfig(configList.joinToString("\n"), subscriptionId, false)
                 launch(Dispatchers.Main) {
                     if (count > 0) {
                         toastSuccess(R.string.toast_success)
