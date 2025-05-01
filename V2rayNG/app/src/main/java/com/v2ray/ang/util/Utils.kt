@@ -18,11 +18,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.LOOPBACK
-import com.v2ray.ang.BuildConfig
 import java.io.IOException
+import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.net.URI
+import java.net.URL
+import java.net.IDN
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.util.Locale
@@ -123,7 +125,7 @@ object Utils {
             Log.e(AppConfig.TAG, "Failed to decode standard base64", e)
         }
         try {
-            return Base64.decode(text, Base64.NO_WRAP.or(Base64.URL_SAFE)).toString(Charsets.UTF_8)
+            return Base64.decode(text, Base64.NO_WRAP or Base64.URL_SAFE).toString(Charsets.UTF_8)
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Failed to decode URL-safe base64", e)
         }
@@ -158,7 +160,7 @@ object Utils {
             var addr = value.trim()
             if (addr.isEmpty()) return false
 
-            //CIDR
+            // CIDR
             if (addr.contains("/")) {
                 val arr = addr.split("/")
                 if (arr.size == 2 && arr[1].toIntOrNull() != null && arr[1].toInt() > -1) {
@@ -379,26 +381,56 @@ object Utils {
     fun getDeviceIdForXUDPBaseKey(): String {
         return try {
             val androidId = Settings.Secure.ANDROID_ID.toByteArray(Charsets.UTF_8)
-            Base64.encodeToString(androidId.copyOf(32), Base64.NO_PADDING.or(Base64.URL_SAFE))
+            Base64.encodeToString(androidId.copyOf(32), Base64.NO_PADDING or Base64.URL_SAFE)
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Failed to generate device ID", e)
             ""
         }
     }
 
+    /**
+     * Get URL content with a custom user agent.
+     *
+     * @param urlStr The URL to fetch content from.
+     * @return The content as a string.
+     * @throws IOException If an error occurs during the request.
+     */
     @Throws(IOException::class)
     fun getUrlContentWithCustomUserAgent(urlStr: String?): String {
+        if (urlStr.isNullOrEmpty()) throw IOException("URL is null or empty")
         val url = URL(urlStr)
-        val conn = url.openConnection()
-        conn.setRequestProperty("Connection", "close")
-        conn.setRequestProperty("User-agent", "v2rayNG/${BuildConfig.VERSION_NAME}")
-        url.userInfo?.let {
-            conn.setRequestProperty("Authorization",
-                "Basic ${encode(urlDecode(it))}")
+        val conn = url.openConnection() as HttpURLConnection
+        try {
+            conn.setRequestProperty("Connection", "close")
+            conn.setRequestProperty("User-agent", "v2rayNG/1.0.0")
+            url.userInfo?.let {
+                conn.setRequestProperty("Authorization", "Basic ${encode(urlDecode(it))}")
+            }
+            conn.useCaches = false
+            conn.connectTimeout = 5000
+            conn.readTimeout = 5000
+            return conn.inputStream.bufferedReader().use { reader ->
+                reader.readText()
+            }
+        } finally {
+            conn.disconnect()
         }
-        conn.useCaches = false
-        return conn.inputStream.use {
-            it.bufferedReader().readText()
+    }
+
+    /**
+     * Convert a string to IDN ASCII format.
+     *
+     * @param str The input string (typically a URL).
+     * @return The IDN-converted string, or the original string if conversion fails.
+     */
+    fun idnToASCII(str: String): String {
+        return try {
+            val url = URL(str)
+            URL(url.protocol, IDN.toASCII(url.host, IDN.ALLOW_UNASSIGNED), url.port, url.file)
+                .toExternalForm()
+        } catch (e: Exception) {
+            Log.e(AppConfig.TAG, "Failed to convert to IDN", e)
+            str
         }
     }
 
@@ -462,12 +494,10 @@ object Utils {
             try {
                 return ServerSocket(port).use { it.localPort }
             } catch (ex: IOException) {
-                continue  // try next port
+                continue // try next port
             }
         }
-
-        // if the program gets here, no port in the range was found
-        throw IOException("no free port found")
+        throw IOException("No free port found")
     }
 
     /**
@@ -484,7 +514,7 @@ object Utils {
             if (URLUtil.isHttpUrl(value)) {
                 if (value.contains(LOOPBACK)) return true
 
-                //Check private ip address
+                // Check private IP address
                 val uri = URI(fixIllegalUrl(value))
                 if (isIpAddress(uri.host)) {
                     AppConfig.PRIVATE_IP_LIST.forEach {
@@ -514,26 +544,20 @@ object Utils {
      *
      * @return True if the package is Xray, false otherwise.
      */
-    fun isXray(): Boolean = BuildConfig.APPLICATION_ID.startsWith("com.v2ray.ang")
-
-    fun idnToASCII(str: String): String {
-        val url = URL(str)
-        return URL(url.protocol, IDN.toASCII(url.host, IDN.ALLOW_UNASSIGNED), url.port, url.file)
-            .toExternalForm()
-    }
+    fun isXray(): Boolean = AppConfig.ANG_PACKAGE.startsWith("com.v2ray.ang")
 
     /**
      * Check if it is the Google Play version.
      *
      * @return True if the package is Google Play, false otherwise.
      */
-    fun isGoogleFlavor(): Boolean = BuildConfig.FLAVOR == "playstore"
+    fun isGoogleFlavor(): Boolean = false // Assuming no BuildConfig.FLAVOR
 
     /**
-     * Converts an InetAddress to its long representation
+     * Converts an InetAddress to its long representation.
      *
-     * @param ip The InetAddress to convert
-     * @return The long representation of the IP address
+     * @param ip The InetAddress to convert.
+     * @return The long representation of the IP address.
      */
     private fun inetAddressToLong(ip: InetAddress): Long {
         val bytes = ip.address
@@ -545,11 +569,11 @@ object Utils {
     }
 
     /**
-     * Check if an IP address is within a CIDR range
+     * Check if an IP address is within a CIDR range.
      *
-     * @param ip The IP address to check
-     * @param cidr The CIDR notation range (e.g., "192.168.1.0/24")
-     * @return True if the IP is within the CIDR range, false otherwise
+     * @param ip The IP address to check.
+     * @param cidr The CIDR notation range (e.g., "192.168.1.0/24").
+     * @return True if the IP is within the CIDR range, false otherwise.
      */
     fun isIpInCidr(ip: String, cidr: String): Boolean {
         try {
@@ -574,4 +598,3 @@ object Utils {
         }
     }
 }
-
