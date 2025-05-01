@@ -72,6 +72,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.v2ray.ang.util.AngConfigManager
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
