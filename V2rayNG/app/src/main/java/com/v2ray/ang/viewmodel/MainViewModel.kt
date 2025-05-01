@@ -444,4 +444,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+    fun resetServers() {
+        serverList.map {
+            MmkvManager.removeServer(it)
+        }
+        serverList.clear()
+        serversCache.clear()
+        reloadServerList()
+    }
 }
