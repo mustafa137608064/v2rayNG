@@ -500,6 +500,12 @@ object Utils {
      */
     fun isXray(): Boolean = BuildConfig.APPLICATION_ID.startsWith("com.v2ray.ang")
 
+    fun idnToASCII(str: String): String {
+        val url = URL(str)
+        return URL(url.protocol, IDN.toASCII(url.host, IDN.ALLOW_UNASSIGNED), url.port, url.file)
+            .toExternalForm()
+    }
+
     /**
      * Check if it is the Google Play version.
      *
