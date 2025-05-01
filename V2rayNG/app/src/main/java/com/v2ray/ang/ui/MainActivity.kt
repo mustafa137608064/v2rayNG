@@ -47,6 +47,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.v2ray.ang.repository.Api
 import com.v2ray.ang.repository.Repositry
+import android.text.TextUtils
+import java.net.IDN
+import com.v2ray.ang.AppConfig.ANG_PACKAGE
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
