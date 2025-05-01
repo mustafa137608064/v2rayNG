@@ -45,8 +45,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.v2ray.ang.repository.Api
-import com.v2ray.ang.repository.Repositry
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -466,33 +464,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             showFileChooser()
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Failed to import config from local file", e)
-            return false
-        }
-        return true
-    }
-
-     /**
-     * import config from url
-     */
-    fun importConfigCustomUrl(url: String?): Boolean {
-        try {
-            if (!Utils.isValidUrl(url)) {
-                toast(R.string.toast_invalid_url)
-                return false
-            }
-            lifecycleScope.launch(Dispatchers.IO) {
-                val configText = try {
-                    Utils.getUrlContentWithCustomUserAgent(url)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    ""
-                }
-                launch(Dispatchers.Main) {
-                    importCustomizeConfig(configText)
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
             return false
         }
         return true
