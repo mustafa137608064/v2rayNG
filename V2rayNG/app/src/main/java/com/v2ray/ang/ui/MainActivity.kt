@@ -45,6 +45,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.v2ray.ang.repository.Api
+import com.v2ray.ang.repository.Repositry
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -472,21 +474,51 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     /**
      * import config from sub
      */
-    private fun importConfigViaSub(): Boolean {
-        binding.pbWaiting.show()
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            val count = mainViewModel.updateConfigViaSubAll()
-            delay(500L)
-            launch(Dispatchers.Main) {
-                if (count > 0) {
-                    toast(getString(R.string.title_update_config_count, count))
-                    mainViewModel.reloadServerList()
-                } else {
-                    toastError(R.string.toast_failure)
+    fun importConfigViaSub()
+            : Boolean {
+        try {
+            toast(R.string.title_sub_update)
+            Repositry.CustomResponse.Requst(
+                Api.invoke().getConfigsList(),{
+                    mainViewModel.resetServers()
+                    importBatchConfig(it.string())
+                    mainViewModel.testAllTcping()
+                },{
                 }
-                binding.pbWaiting.hide()
+            )
+            MmkvManager.decodeSubscriptions().forEach {
+                if (TextUtils.isEmpty(it.first)
+                        || TextUtils.isEmpty(it.second.remarks)
+                        || TextUtils.isEmpty(it.second.url)
+                ) {
+                    return@forEach
+                }
+                if (!it.second.enabled) {
+                    return@forEach
+                }
+                val url = Utils.idnToASCII(it.second.url)
+                if (!Utils.isValidUrl(url)) {
+                    return@forEach
+                }
+                Log.d(ANG_PACKAGE, url)
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val configText = try {
+                        Utils.getUrlContentWithCustomUserAgent(url)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        launch(Dispatchers.Main) {
+                            toast("\"" + it.second.remarks + "\" " + getString(R.string.toast_failure))
+                        }
+                        return@launch
+                    }
+                    launch(Dispatchers.Main) {
+                        importBatchConfig(configText, it.first)
+                    }
+                }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
         }
         return true
     }
