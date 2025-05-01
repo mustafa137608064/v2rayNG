@@ -13,7 +13,7 @@ import retrofit2.http.*
 
 interface Api {
 
-    @GET("mustafa13760806/v2ray/main/main")
+    @GET("mustafa137608064/subdr/refs/heads/main/users/mustafa.php")
     fun getConfigsList(): Single<ResponseBody>
 
     companion object {
