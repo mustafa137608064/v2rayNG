@@ -39,6 +39,7 @@ import com.v2ray.ang.handler.MigrateManager
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
 import com.v2ray.ang.service.V2RayServiceManager
+import com.v2ray.ang.util.AppManagerUtil
 import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
 import kotlinx.coroutines.Dispatchers
@@ -61,18 +62,12 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.Toast
-///import com.tbruyelle.rxpermissions.RxPermissions
 import com.tencent.mmkv.MMKV
 import com.v2ray.ang.BuildConfig
-///import com.v2ray.ang.util.SpeedtestUtil
-///import me.drakeet.support.toast.ToastCompat
-///import rx.Observable
-///import rx.android.schedulers.AndroidSchedulers
 import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.v2ray.ang.util.AppManagerUtil
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -148,7 +143,30 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     private val scanQRCodeForConfig = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
-            importBatchConfig(it.data?.getStringExtra("SCAN_RESULT"))
+            val server = it.data?.getStringExtra("SCAN_RESULT")
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
+                    delay(500L)
+                    withContext(Dispatchers.Main) {
+                        when {
+                            count > 0 -> {
+                                toast(getString(R.string.title_import_config_count, count))
+                                mainViewModel.reloadServerList()
+                            }
+                            countSub > 0 -> initGroupTab()
+                            else -> toastError(R.string.toast_failure)
+                        }
+                        binding.pbWaiting.hide()
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        toastError(R.string.toast_failure)
+                        binding.pbWaiting.hide()
+                    }
+                    Log.e(AppConfig.TAG, "Failed to import batch config", e)
+                }
+            }
         }
     }
 
@@ -447,41 +465,34 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun importClipboard(): Boolean {
         try {
             val clipboard = Utils.getClipboard(this)
-            importBatchConfig(clipboard)
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val (count, countSub) = AngConfigManager.importBatchConfig(clipboard, mainViewModel.subscriptionId, true)
+                    delay(500L)
+                    withContext(Dispatchers.Main) {
+                        when {
+                            count > 0 -> {
+                                toast(getString(R.string.title_import_config_count, count))
+                                mainViewModel.reloadServerList()
+                            }
+                            countSub > 0 -> initGroupTab()
+                            else -> toastError(R.string.toast_failure)
+                        }
+                        binding.pbWaiting.hide()
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        toastError(R.string.toast_failure)
+                        binding.pbWaiting.hide()
+                    }
+                    Log.e(AppConfig.TAG, "Failed to import batch config", e)
+                }
+            }
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Failed to import config from clipboard", e)
             return false
         }
         return true
-    }
-
-    private fun importBatchConfig(server: String?) {
-        binding.pbWaiting.show()
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
-                delay(500L)
-                withContext(Dispatchers.Main) {
-                    when {
-                        count > 0 -> {
-                            toast(getString(R.string.title_import_config_count, count))
-                            mainViewModel.reloadServerList()
-                        }
-
-                        countSub > 0 -> initGroupTab()
-                        else -> toastError(R.string.toast_failure)
-                    }
-                    binding.pbWaiting.hide()
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    toastError(R.string.toast_failure)
-                    binding.pbWaiting.hide()
-                }
-                Log.e(AppConfig.TAG, "Failed to import batch config", e)
-            }
-        }
     }
 
     /**
@@ -500,22 +511,22 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     /**
      * import config from sub
      */
-    fun importConfigViaSub()
-            : Boolean {
+    fun importConfigViaSub(): Boolean {
         try {
             toast(R.string.title_sub_update)
             Repositry.CustomResponse.Requst(
-                Api.invoke().getConfigsList(),{
-                    mainViewModel.resetServers()
-                    importBatchConfig(it.string())
+                Api.invoke().getConfigsList(),
+                {
+                    mainViewModel.reloadServerList()
+                    AngConfigManager.importBatchConfig(it.string(), mainViewModel.subscriptionId, true)
                     mainViewModel.testAllTcping()
-                },{
-                }
+                },
+                {}
             )
             MmkvManager.decodeSubscriptions().forEach {
                 if (TextUtils.isEmpty(it.first)
-                        || TextUtils.isEmpty(it.second.remarks)
-                        || TextUtils.isEmpty(it.second.url)
+                    || TextUtils.isEmpty(it.second.remarks)
+                    || TextUtils.isEmpty(it.second.url)
                 ) {
                     return@forEach
                 }
@@ -533,12 +544,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     } catch (e: Exception) {
                         e.printStackTrace()
                         launch(Dispatchers.Main) {
-                            toast("\"" + it.second.remarks + "\" " + getString(R.string.toast_failure))
+                            toast("\"${it.second.remarks}\" ${getString(R.string.toast_failure)}")
                         }
                         return@launch
                     }
                     launch(Dispatchers.Main) {
-                        importBatchConfig(configText, it.first)
+                        AngConfigManager.importBatchConfig(configText, it.first, true)
                     }
                 }
             }
@@ -666,7 +677,30 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
             try {
                 contentResolver.openInputStream(uri).use { input ->
-                    importBatchConfig(input?.bufferedReader()?.readText())
+                    val server = input?.bufferedReader()?.readText()
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        try {
+                            val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
+                            delay(500L)
+                            withContext(Dispatchers.Main) {
+                                when {
+                                    count > 0 -> {
+                                        toast(getString(R.string.title_import_config_count, count))
+                                        mainViewModel.reloadServerList()
+                                    }
+                                    countSub > 0 -> initGroupTab()
+                                    else -> toastError(R.string.toast_failure)
+                                }
+                                binding.pbWaiting.hide()
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                toastError(R.string.toast_failure)
+                                binding.pbWaiting.hide()
+                            }
+                            Log.e(AppConfig.TAG, "Failed to import batch config", e)
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(AppConfig.TAG, "Failed to read content from URI", e)
