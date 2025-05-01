@@ -50,6 +50,28 @@ import com.v2ray.ang.repository.Repositry
 import android.text.TextUtils
 import java.net.IDN
 import com.v2ray.ang.AppConfig.ANG_PACKAGE
+import android.app.Dialog
+import android.content.ActivityNotFoundException
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
+import android.widget.Button
+import android.widget.Toast
+import com.tbruyelle.rxpermissions.RxPermissions
+import com.tencent.mmkv.MMKV
+import com.v2ray.ang.BuildConfig
+import com.v2ray.ang.util.SpeedtestUtil
+import me.drakeet.support.toast.ToastCompat
+import rx.Observable
+import rx.android.schedulers.AndroidSchedulers
+import java.io.File
+import java.io.FileOutputStream
+import java.util.concurrent.TimeUnit
+import androidx.recyclerview.widget.LinearLayoutManager
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
