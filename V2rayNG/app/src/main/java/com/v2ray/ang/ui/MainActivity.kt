@@ -517,7 +517,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             Repositry.CustomResponse.Requst(
                 Api.invoke().getConfigsList(),
                 {
-                    mainViewModel.reloadServerList()
+                    mainViewModel.resetServers()
                     AngConfigManager.importBatchConfig(it.string(), mainViewModel.subscriptionId, true)
                     mainViewModel.testAllTcping()
                 },
