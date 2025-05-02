@@ -103,6 +103,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private var mItemTouchHelper: ItemTouchHelper? = null
     val mainViewModel: MainViewModel by viewModels()
 
+    // متغیر برای ردیابی وضعیت به‌روزرسانی سرورها
+    private var isUpdatingServers = false
+
     // register activity result for requesting permission
     private val requestPermissionLauncher =
         registerForActivityResult(
@@ -182,6 +185,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         setSupportActionBar(binding.toolbar)
 
         binding.fab.setOnClickListener {
+            if (isUpdatingServers) {
+                toast("لطفاً منتظر بمانید تا سرورها به‌روزرسانی شوند")
+                return@setOnClickListener
+            }
             if (mainViewModel.isRunning.value == true) {
                 V2RayServiceManager.stopVService(this)
             } else if ((MmkvManager.decodeSettingsString(AppConfig.PREF_MODE) ?: VPN) == VPN) {
@@ -309,11 +316,17 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun startV2Ray() {
-        if (MmkvManager.getSelectServer().isNullOrEmpty()) {
-            toast(R.string.title_file_chooser)
+        val selectedServer = MmkvManager.getSelectServer()
+        if (selectedServer.isNullOrEmpty()) {
+            toast("لطفاً یک سرور را انتخاب کنید یا منتظر اتمام به‌روزرسانی بمانید")
             return
         }
-        V2RayServiceManager.startVService(this)
+        try {
+            V2RayServiceManager.startVService(this)
+        } catch (e: Exception) {
+            toastError("خطا در شروع سرویس VPN: ${e.message}")
+            Log.e(AppConfig.TAG, "Failed to start V2Ray service", e)
+        }
     }
 
     private fun restartV2Ray() {
@@ -338,6 +351,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onStart() {
         super.onStart()
 
+        // نمایش ProgressBar هنگام دریافت سرورها
+        binding.pbWaiting.show()
+        isUpdatingServers = true // علامت‌گذاری شروع به‌روزرسانی
+        binding.fab.isEnabled = false // غیرفعال کردن دکمه fab
+
         // درخواست خودکار برای دریافت لینک‌های ساب‌اسکریپشن
         Api().getConfigsList()
             .subscribeOn(Schedulers.io())
@@ -351,6 +369,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                         mainViewModel.removeAllServer()
                         // وارد کردن لینک‌های جدید
                         val (count, countSub) = AngConfigManager.importBatchConfig(configs, mainViewModel.subscriptionId, true)
+                        delay(500) // تأخیر کوتاه برای اطمینان از بارگذاری سرورها
                         withContext(Dispatchers.Main) {
                             when {
                                 count > 0 -> {
@@ -360,17 +379,26 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                                 countSub > 0 -> initGroupTab() // به‌روزرسانی تب‌های گروه
                                 else -> toastError(R.string.toast_failure)
                             }
+                            binding.pbWaiting.hide() // مخفی کردن ProgressBar
+                            isUpdatingServers = false // علامت‌گذاری اتمام به‌روزرسانی
+                            binding.fab.isEnabled = true // فعال کردن دکمه fab
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
                             toastError(R.string.toast_failure)
                             Log.e(AppConfig.TAG, "Failed to import configs", e)
+                            binding.pbWaiting.hide() // مخفی کردن ProgressBar
+                            isUpdatingServers = false // علامت‌گذاری اتمام به‌روزرسانی
+                            binding.fab.isEnabled = true // فعال کردن دکمه fab
                         }
                     }
                 }
             }, { error ->
                 toastError("خطا در دریافت سرورها: ${error.message}")
                 Log.e("AutoUpdate", "Error: ${error.message}")
+                binding.pbWaiting.hide() // مخفی کردن ProgressBar
+                isUpdatingServers = false // علامت‌گذاری اتمام به‌روزرسانی
+                binding.fab.isEnabled = true // فعال کردن دکمه fab
             })
             .let { disposables.add(it) }
     }
