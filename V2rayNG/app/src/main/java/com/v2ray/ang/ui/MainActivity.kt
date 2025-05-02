@@ -69,8 +69,8 @@ import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -172,6 +172,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             }
         }
     }
+
+    private val disposables = CompositeDisposable() // برای مدیریت RxJava
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -331,6 +333,44 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     public override fun onPause() {
         super.onPause()
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        // درخواست خودکار برای دریافت لینک‌های ساب‌اسکریپشن
+        Api().getConfigsList()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ response ->
+                // دریافت پاسخ خام (لینک‌های VLESS و VMess)
+                val configs = response.string()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        // وارد کردن لینک‌ها به لیست سرورها
+                        val (count, countSub) = AngConfigManager.importBatchConfig(configs, mainViewModel.subscriptionId, true)
+                        withContext(Dispatchers.Main) {
+                            when {
+                                count > 0 -> {
+                                    toast(getString(R.string.title_import_config_count, count))
+                                    mainViewModel.reloadServerList() // به‌روزرسانی RecyclerView
+                                }
+                                countSub > 0 -> initGroupTab() // به‌روزرسانی تب‌های گروه
+                                else -> toastError(R.string.toast_failure)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            toastError(R.string.toast_failure)
+                            Log.e(AppConfig.TAG, "Failed to import configs", e)
+                        }
+                    }
+                }
+            }, { error ->
+                toastError("خطا در دریافت سرورها: ${error.message}")
+                Log.e("AutoUpdate", "Error: ${error.message}")
+            })
+            .let { disposables.add(it) }
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
@@ -563,24 +603,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return true
     }
 
-override fun onStart() {
-    super.onStart()
-
-    Api().getConfigsList()
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe({ response ->
-            // داده دریافتی را ذخیره یا استفاده کن
-            val configs = response.string()
-            // مثلاً لاگ بگیر یا پردازش کن
-            Log.d("AutoUpdate", "Configs: $configs")
-        }, { error ->
-            Log.e("AutoUpdate", "Error: ${error.message}")
-        })
-}
-
-
-
     private fun exportAll() {
         binding.pbWaiting.show()
         lifecycleScope.launch(Dispatchers.IO) {
@@ -784,5 +806,10 @@ override fun onStart() {
         }
         binding.drawerLayout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        disposables.clear() // پاک کردن اشتراک‌های RxJava
     }
 }
