@@ -347,7 +347,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 val configs = response.string()
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
-                        // وارد کردن لینک‌ها به لیست سرورها
+                        // حذف تمام سرورهای موجود
+                        mainViewModel.removeAllServer()
+                        // وارد کردن لینک‌های جدید
                         val (count, countSub) = AngConfigManager.importBatchConfig(configs, mainViewModel.subscriptionId, true)
                         withContext(Dispatchers.Main) {
                             when {
