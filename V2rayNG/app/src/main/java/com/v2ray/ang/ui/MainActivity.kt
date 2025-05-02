@@ -409,7 +409,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     // بارگذاری منو در نوار ابزار
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
+        menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
 
