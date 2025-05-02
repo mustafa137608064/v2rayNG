@@ -339,18 +339,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    public override fun onResume() {
-        super.onResume()
-        mainViewModel.reloadServerList()
-    }
-
-    public override fun onPause() {
-        super.onPause()
-    }
-
-    override fun onStart() {
-        super.onStart()
-
+    // متد جدید برای به‌روزرسانی سرورها
+    private fun updateServerList() {
         // نمایش ProgressBar هنگام دریافت سرورها
         binding.pbWaiting.show()
         isUpdatingServers = true // علامت‌گذاری شروع به‌روزرسانی
@@ -401,6 +391,26 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 binding.fab.isEnabled = true // فعال کردن دکمه fab
             })
             .let { disposables.add(it) }
+    }
+
+    public override fun onResume() {
+        super.onResume()
+        mainViewModel.reloadServerList()
+    }
+
+    public override fun onPause() {
+        super.onPause()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        updateServerList() // فراخوانی متد به‌روزرسانی سرورها
+    }
+
+    // بارگذاری منو در نوار ابزار
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
@@ -504,6 +514,17 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         R.id.sub_update -> {
             importConfigViaSub()
             true
+        }
+
+        // مدیریت کلیک روی دکمه‌ی Refresh
+        R.id.refresh_servers -> {
+            if (isUpdatingServers) {
+                toast("در حال به‌روزرسانی سرورها، لطفاً صبر کنید")
+                true
+            } else {
+                updateServerList() // فراخوانی متد به‌روزرسانی سرورها
+                true
+            }
         }
 
         else -> super.onOptionsItemSelected(item)
