@@ -68,6 +68,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 import androidx.recyclerview.widget.LinearLayoutManager
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
+
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -559,6 +562,24 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
         return true
     }
+
+override fun onStart() {
+    super.onStart()
+
+    Api().getConfigsList()
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe({ response ->
+            // داده دریافتی را ذخیره یا استفاده کن
+            val configs = response.string()
+            // مثلاً لاگ بگیر یا پردازش کن
+            Log.d("AutoUpdate", "Configs: $configs")
+        }, { error ->
+            Log.e("AutoUpdate", "Error: ${error.message}")
+        })
+}
+
+
 
     private fun exportAll() {
         binding.pbWaiting.show()
