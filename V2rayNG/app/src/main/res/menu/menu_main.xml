@@ -5,8 +5,7 @@
     <!-- دکمه‌ی Refresh به‌صورت مستقل در نوار ابزار -->
     <item
         android:id="@+id/refresh_servers"
-        android:icon="@android:drawable/ic_menu_rotate"
-        android:tint="#FF9800"
+        android:icon="@drawable/ic_refresh_24dp"
         android:title="@string/refresh_servers"
         app:showAsAction="always" />
     
