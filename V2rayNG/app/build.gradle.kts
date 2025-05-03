@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.v2ray.ang"
+    namespace = "com.v2plus.ang"
     compileSdk = 35
 
     defaultConfig {
