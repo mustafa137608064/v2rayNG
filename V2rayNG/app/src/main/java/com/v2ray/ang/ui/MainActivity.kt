@@ -339,7 +339,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             V2RayServiceManager.stopVService(this)
         }
         lifecycleScope.launch {
-            delay(2000)
+            delay(1000)
             startV2Ray()
         }
     }
@@ -464,7 +464,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
             V2RayServiceManager.stopVService(this)
             lifecycleScope.launch {
-                delay(2000)
+                delay(1000)
                 mainViewModel.isRunning.value = false
             }
         }
@@ -832,7 +832,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
             V2RayServiceManager.stopVService(this)
             lifecycleScope.launch {
-                delay(2000)
+                delay(1000)
                 android.os.Process.killProcess(android.os.Process.myPid())
             }
         }
