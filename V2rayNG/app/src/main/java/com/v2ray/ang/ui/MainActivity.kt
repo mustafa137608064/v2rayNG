@@ -328,10 +328,15 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             return
         }
         try {
-            // اطمینان از توقف سرویس قبل از راه‌اندازی مجدد
+            // اطمینان از توقف کامل سرویس قبل از راه‌اندازی مجدد
             if (mainViewModel.isRunning.value == true) {
                 V2RayServiceManager.stopVService(this)
-                delay(1000) // تأخیر کوتاه برای اطمینان از توقف کامل
+                delay(2000) // افزایش تأخیر به 2000 میلی‌ثانیه
+                // بررسی اینکه آیا سرویس هنوز در حال اجرا است
+                if (V2RayServiceManager.isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
+                    toastError("سرویس هنوز در حال اجرا است، لطفاً دوباره تلاش کنید")
+                    return
+                }
             }
             V2RayServiceManager.startVService(this)
         } catch (e: Exception) {
@@ -345,7 +350,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             V2RayServiceManager.stopVService(this)
         }
         lifecycleScope.launch {
-            delay(1000) // تأخیر برای اطمینان از توقف کامل
+            delay(2000) // افزایش تأخیر به 2000 میلی‌ثانیه
             startV2Ray()
         }
     }
@@ -877,5 +882,16 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             V2RayServiceManager.stopVService(this)
         }
         disposables.clear() // پاک کردن اشتراک‌های RxJava
+    }
+
+    // متد کمکی برای بررسی وضعیت سرویس
+    private fun isServiceRunning(context: android.content.Context, serviceClassName: String): Boolean {
+        val manager = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClassName == service.service.className) {
+                return true
+            }
+        }
+        return false
     }
 }
