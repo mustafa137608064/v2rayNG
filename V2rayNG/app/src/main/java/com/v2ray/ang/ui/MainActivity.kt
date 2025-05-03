@@ -647,7 +647,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 if (!Utils.isValidUrl(url)) {
                     return@forEach
                 }
-                Log.d(ANG_PACKAGE, url)
+                Log.d("com.v2ray.ang", url) // جایگزینی ANG_PACKAGE با مقدار ثابت
                 lifecycleScope.launch(Dispatchers.IO) {
                     val configText = try {
                         Utils.getUrlContentWithCustomUserAgent(url)
