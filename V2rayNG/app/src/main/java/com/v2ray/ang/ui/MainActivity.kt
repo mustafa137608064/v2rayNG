@@ -20,7 +20,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
@@ -50,28 +49,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.v2ray.ang.repository.Api
 import com.v2ray.ang.repository.Repositry
-import android.app.Dialog
-import android.content.ActivityNotFoundException
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.text.TextUtils
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.Window
-import android.view.WindowManager
-import android.widget.Button
-import android.widget.Toast
 import com.tencent.mmkv.MMKV
-import com.v2ray.ang.BuildConfig
-import java.io.File
-import java.io.FileOutputStream
-import java.net.IDN
-import java.util.concurrent.TimeUnit
-import androidx.recyclerview.widget.LinearLayoutManager
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import com.v2ray.ang.dto.SubscriptionItem
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -97,42 +80,30 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             }
         }
 
-        override fun onTabUnselected(tab: TabLayout.Tab?) {
-        }
-
-        override fun onTabReselected(tab: TabLayout.Tab?) {
-        }
+        override fun onTabUnselected(tab: TabLayout.Tab?) {}
+        override fun onTabReselected(tab: TabLayout.Tab?) {}
     }
     private var mItemTouchHelper: ItemTouchHelper? = null
     val mainViewModel: MainViewModel by viewModels()
 
-    // متغیر برای ردیابی وضعیت به‌روزرسانی سرورها
     private var isUpdatingServers = false
 
-    // register activity result for requesting permission
-    private val requestPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                when (pendingAction) {
-                    Action.IMPORT_QR_CODE_CONFIG ->
-                        scanQRCodeForConfig.launch(Intent(this, ScannerActivity::class.java))
-
-                    Action.READ_CONTENT_FROM_URI ->
-                        chooseFileForCustomConfig.launch(Intent.createChooser(Intent(Intent.ACTION_GET_CONTENT).apply {
-                            type = "*/*"
-                            addCategory(Intent.CATEGORY_OPENABLE)
-                        }, getString(R.string.title_file_chooser)))
-
-                    Action.POST_NOTIFICATIONS -> {}
-                    else -> {}
-                }
-            } else {
-                toast(R.string.toast_permission_denied)
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            when (pendingAction) {
+                Action.IMPORT_QR_CODE_CONFIG -> scanQRCodeForConfig.launch(Intent(this, ScannerActivity::class.java))
+                Action.READ_CONTENT_FROM_URI -> chooseFileForCustomConfig.launch(Intent.createChooser(Intent(Intent.ACTION_GET_CONTENT).apply {
+                    type = "*/*"
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                }, getString(R.string.title_file_chooser)))
+                Action.POST_NOTIFICATIONS -> {}
+                else -> {}
             }
-            pendingAction = Action.NONE
+        } else {
+            toast(R.string.toast_permission_denied)
         }
+        pendingAction = Action.NONE
+    }
 
     private var pendingAction: Action = Action.NONE
 
@@ -179,7 +150,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    private val disposables = CompositeDisposable() // برای مدیریت RxJava
+    private val disposables = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -235,6 +206,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         toggle.syncState()
         binding.navView.setNavigationItemSelectedListener(this)
 
+        // اضافه کردن ساب‌اسکریپشن Mustafa در زمان راه‌اندازی
+        addMustafaSubscription()
         initGroupTab()
         setupViewModel()
         migrateLegacy()
@@ -257,6 +230,24 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
         })
+    }
+
+    // متد جدید برای اضافه کردن لینک mustafa.php به ساب‌اسکریپشن‌ها
+    private fun addMustafaSubscription() {
+        val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php"
+        val existingSubscriptions = MmkvManager.decodeSubscriptions()
+        if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
+            val subscriptionId = Utils.getUuid()
+            val subscriptionItem = SubscriptionItem(
+                remarks = "Mustafa Subscription",
+                url = mustafaUrl,
+                enabled = true
+            )
+            MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
+            Log.d(AppConfig.TAG, "Added Mustafa subscription with ID: $subscriptionId")
+        } else {
+            Log.d(AppConfig.TAG, "Mustafa subscription already exists")
+        }
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -315,8 +306,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             tab.tag = listId[it]
             binding.tabGroup.addTab(tab)
         }
-        val selectIndex =
-            listId.indexOf(mainViewModel.subscriptionId).takeIf { it >= 0 } ?: (listId.count() - 1)
+        val selectIndex = listId.indexOf(mainViewModel.subscriptionId).takeIf { it >= 0 } ?: (listId.count() - 1)
         binding.tabGroup.selectTab(binding.tabGroup.getTabAt(selectIndex))
         binding.tabGroup.addOnTabSelectedListener(tabGroupListener)
         binding.tabGroup.isVisible = true
@@ -329,11 +319,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             return
         }
         try {
-            // اطمینان از توقف کامل سرویس قبل از راه‌اندازی مجدد
             if (mainViewModel.isRunning.value == true || isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
                 V2RayServiceManager.stopVService(this)
-                delay(2000) // افزایش تأخیر به 2000 میلی‌ثانیه
-                // بررسی دوباره برای اطمینان از توقف کامل
+                delay(2000)
                 if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
                     toastError("سرویس هنوز در حال اجرا است، لطفاً دوباره تلاش کنید")
                     return
@@ -351,79 +339,138 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             V2RayServiceManager.stopVService(this)
         }
         lifecycleScope.launch {
-            delay(2000) // افزایش تأخیر به 2000 میلی‌ثانیه
+            delay(2000)
             startV2Ray()
         }
     }
 
-    // متد جدید برای به‌روزرسانی سرورها
     private fun updateServerList() {
-        // نمایش ProgressBar هنگام دریافت سرورها
         binding.pbWaiting.show()
-        isUpdatingServers = true // علامت‌گذاری شروع به‌روزرسانی
-        binding.fab.isEnabled = false // غیرفعال کردن دکمه fab
+        isUpdatingServers = true
+        binding.fab.isEnabled = false
 
-        // درخواست خودکار برای دریافت تمام ساب‌اسکریپشن‌ها
         Api.fetchAllSubscriptions()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ configsList ->
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
-                        // حذف تمام سرورهای موجود
-                        mainViewModel.removeAllServer()
-                        // وارد کردن لینک‌های جدید از تمام ساب‌اسکریپشن‌ها
+                        val newServers = mutableListOf<String>()
                         configsList.forEach { config ->
-                            val (count, countSub) = AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, true)
-                            delay(500) // تأخیر کوتاه برای اطمینان از بارگذاری
+                            val (count, countSub) = AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, false)
+                            if (count > 0 || countSub > 0) {
+                                newServers.add(config)
+                                Log.d(AppConfig.TAG, "Imported $count servers and $countSub subscriptions")
+                            }
                         }
-                        withContext(Dispatchers.Main) {
-                            toast(getString(R.string.title_import_config_count, configsList.size))
-                            mainViewModel.reloadServerList() // به‌روزرسانی RecyclerView
-                            binding.pbWaiting.hide() // مخفی کردن ProgressBar
-                            isUpdatingServers = false // علامت‌گذاری اتمام به‌روزرسانی
-                            binding.fab.isEnabled = true // فعال کردن دکمه fab
+                        if (newServers.isNotEmpty()) {
+                            mainViewModel.removeAllServer()
+                            newServers.forEach { config ->
+                                AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, true)
+                            }
+                            withContext(Dispatchers.Main) {
+                                toast(getString(R.string.title_import_config_count, newServers.size))
+                                mainViewModel.reloadServerList()
+                                initGroupTab()
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                toastError("هیچ سروری از ساب‌اسکریپشن‌ها دریافت نشد")
+                            }
                         }
                     } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
-                            toastError(R.string.toast_failure)
+                            toastError("خطا در وارد کردن سرورها: ${e.message}")
                             Log.e(AppConfig.TAG, "Failed to import configs", e)
-                            binding.pbWaiting.hide() // مخفی کردن ProgressBar
-                            isUpdatingServers = false // علامت‌گذاری اتمام به‌روزرسانی
-                            binding.fab.isEnabled = true // فعال کردن دکمه fab
+                        }
+                    } finally {
+                        withContext(Dispatchers.Main) {
+                            binding.pbWaiting.hide()
+                            isUpdatingServers = false
+                            binding.fab.isEnabled = true
                         }
                     }
                 }
             }, { error ->
                 toastError("خطا در دریافت سرورها: ${error.message}")
-                Log.e("AutoUpdate", "Error: ${error.message}")
-                binding.pbWaiting.hide() // مخفی کردن ProgressBar
-                isUpdatingServers = false // علامت‌گذاری اتمام به‌روزرسانی
-                binding.fab.isEnabled = true // فعال کردن دکمه fab
+                Log.e(AppConfig.TAG, "Error fetching subscriptions: ${error.message}", error)
+                binding.pbWaiting.hide()
+                isUpdatingServers = false
+                binding.fab.isEnabled = true
             })
             .let { disposables.add(it) }
     }
 
-    public override fun onResume() {
+    fun importConfigViaSub(): Boolean {
+        try {
+            toast(R.string.title_sub_update)
+            MmkvManager.decodeSubscriptions().forEach {
+                if (TextUtils.isEmpty(it.first) || TextUtils.isEmpty(it.second.remarks) || TextUtils.isEmpty(it.second.url)) {
+                    return@forEach
+                }
+                if (!it.second.enabled) {
+                    return@forEach
+                }
+                val url = Utils.idnToASCII(it.second.url)
+                if (!Utils.isValidUrl(url)) {
+                    toastError("URL نامعتبر: ${it.second.remarks}")
+                    return@forEach
+                }
+                Log.d(AppConfig.TAG, "Fetching subscription: $url")
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val configText = try {
+                        Utils.getUrlContentWithCustomUserAgent(url)
+                    } catch (e: Exception) {
+                        launch(Dispatchers.Main) {
+                            toastError("\"${it.second.remarks}\" ${getString(R.string.toast_failure)}: ${e.message}")
+                        }
+                        Log.e(AppConfig.TAG, "Failed to fetch subscription $url: ${e.message}", e)
+                        return@launch
+                    }
+                    try {
+                        val (count, countSub) = AngConfigManager.importBatchConfig(configText, it.first, true)
+                        launch(Dispatchers.Main) {
+                            if (count > 0 || countSub > 0) {
+                                toast(getString(R.string.title_import_config_count, count))
+                                mainViewModel.reloadServerList()
+                                initGroupTab()
+                            } else {
+                                toastError("هیچ سروری از ${it.second.remarks} وارد نشد")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        launch(Dispatchers.Main) {
+                            toastError("خطا در وارد کردن سرورها از ${it.second.remarks}: ${e.message}")
+                        }
+                        Log.e(AppConfig.TAG, "Failed to import configs from $url: ${e.message}", e)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            toastError("خطا در به‌روزرسانی ساب‌اسکریپشن‌ها: ${e.message}")
+            Log.e(AppConfig.TAG, "Error updating subscriptions", e)
+            return false
+        }
+        return true
+    }
+
+    override fun onResume() {
         super.onResume()
         mainViewModel.reloadServerList()
     }
 
     override fun onStart() {
         super.onStart()
-        // بازنشانی وضعیت سرویس هنگام بازگشایی برنامه
         if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
             V2RayServiceManager.stopVService(this)
             lifecycleScope.launch {
                 delay(2000)
-                mainViewModel.isRunning.value = false // بازنشانی وضعیت
+                mainViewModel.isRunning.value = false
             }
         }
-        // به‌روزرسانی خودکار ساب‌اسکریپشن‌ها با هر اجرا
         updateServerList()
     }
 
-    // بارگذاری منو در نوار ابزار
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
@@ -434,115 +481,93 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             importQRcode()
             true
         }
-
         R.id.import_clipboard -> {
             importClipboard()
             true
         }
-
         R.id.import_local -> {
             importConfigLocal()
             true
         }
-
         R.id.import_manually_vmess -> {
             importManually(EConfigType.VMESS.value)
             true
         }
-
         R.id.import_manually_vless -> {
             importManually(EConfigType.VLESS.value)
             true
         }
-
         R.id.import_manually_ss -> {
             importManually(EConfigType.SHADOWSOCKS.value)
             true
         }
-
         R.id.import_manually_socks -> {
             importManually(EConfigType.SOCKS.value)
             true
         }
-
         R.id.import_manually_http -> {
             importManually(EConfigType.HTTP.value)
             true
         }
-
         R.id.import_manually_trojan -> {
             importManually(EConfigType.TROJAN.value)
             true
         }
-
         R.id.import_manually_wireguard -> {
             importManually(EConfigType.WIREGUARD.value)
             true
         }
-
         R.id.import_manually_hysteria2 -> {
             importManually(EConfigType.HYSTERIA2.value)
             true
         }
-
         R.id.export_all -> {
             exportAll()
             true
         }
-
         R.id.ping_all -> {
             toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
             mainViewModel.testAllTcping()
             true
         }
-
         R.id.real_ping_all -> {
             toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
             mainViewModel.testAllRealPing()
             true
         }
-
         R.id.service_restart -> {
             restartV2Ray()
             true
         }
-
         R.id.del_all_config -> {
             delAllConfig()
             true
         }
-
         R.id.del_duplicate_config -> {
             delDuplicateConfig()
             true
         }
-
         R.id.del_invalid_config -> {
             delInvalidConfig()
             true
         }
-
         R.id.sort_by_test_results -> {
             sortByTestResults()
             true
         }
-
         R.id.sub_update -> {
             importConfigViaSub()
             true
         }
-
-        // مدیریت کلیک روی دکمه‌ی Refresh
         R.id.refresh_servers -> {
             if (isUpdatingServers) {
                 toast("در حال به‌روزرسانی سرورها، لطفاً صبر کنید")
                 true
             } else {
-                updateServerList() // فراخوانی متد به‌روزرسانی سرورها
+                updateServerList()
                 true
             }
         }
-
         else -> super.onOptionsItemSelected(item)
     }
 
@@ -555,9 +580,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         )
     }
 
-    /**
-     * import config from qrcode
-     */
     private fun importQRcode(): Boolean {
         val permission = Manifest.permission.CAMERA
         if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
@@ -569,9 +591,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return true
     }
 
-    /**
-     * import config from clipboard
-     */
     private fun importClipboard(): Boolean {
         try {
             val clipboard = Utils.getClipboard(this)
@@ -605,66 +624,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return true
     }
 
-    /**
-     * import config from local config file
-     */
     private fun importConfigLocal(): Boolean {
         try {
             showFileChooser()
         } catch (e: Exception) {
             Log.e(AppConfig.TAG, "Failed to import config from local file", e)
-            return false
-        }
-        return true
-    }
-
-    /**
-     * import config from sub
-     */
-    fun importConfigViaSub(): Boolean {
-        try {
-            toast(R.string.title_sub_update)
-            Repositry.CustomResponse.Requst(
-                Api.invoke().getConfigsList("https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php"),
-                {
-                    mainViewModel.resetServers()
-                    AngConfigManager.importBatchConfig(it.string(), mainViewModel.subscriptionId, true)
-                    mainViewModel.testAllTcping()
-                },
-                {}
-            )
-            MmkvManager.decodeSubscriptions().forEach {
-                if (TextUtils.isEmpty(it.first)
-                    || TextUtils.isEmpty(it.second.remarks)
-                    || TextUtils.isEmpty(it.second.url)
-                ) {
-                    return@forEach
-                }
-                if (!it.second.enabled) {
-                    return@forEach
-                }
-                val url = Utils.idnToASCII(it.second.url)
-                if (!Utils.isValidUrl(url)) {
-                    return@forEach
-                }
-                Log.d("com.v2ray.ang", url) // جایگزینی ANG_PACKAGE با مقدار ثابت
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val configText = try {
-                        Utils.getUrlContentWithCustomUserAgent(url)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        launch(Dispatchers.Main) {
-                            toast("\"${it.second.remarks}\" ${getString(R.string.toast_failure)}")
-                        }
-                        return@launch
-                    }
-                    launch(Dispatchers.Main) {
-                        AngConfigManager.importBatchConfig(configText, it.first, true)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
             return false
         }
         return true
@@ -697,9 +661,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     }
                 }
             }
-            .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do nothing
-            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .show()
     }
 
@@ -716,9 +678,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     }
                 }
             }
-            .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do nothing
-            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .show()
     }
 
@@ -735,9 +695,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     }
                 }
             }
-            .setNegativeButton(android.R.string.cancel) { _, _ ->
-                //do nothing
-            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> }
             .show()
     }
 
@@ -752,9 +710,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    /**
-     * show file chooser
-     */
     private fun showFileChooser() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "*/*"
@@ -774,9 +729,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    /**
-     * read content from uri
-     */
     private fun readContentFromUri(uri: Uri) {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
@@ -877,19 +829,16 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     override fun onDestroy() {
         super.onDestroy()
-        // اطمینان از توقف کامل سرویس هنگام بسته شدن برنامه
         if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
             V2RayServiceManager.stopVService(this)
             lifecycleScope.launch {
                 delay(2000)
-                // تلاش برای پاک‌سازی کامل فرآیند
                 android.os.Process.killProcess(android.os.Process.myPid())
             }
         }
-        disposables.clear() // پاک کردن اشتراک‌های RxJava
+        disposables.clear()
     }
 
-    // متد کمکی برای بررسی وضعیت سرویس
     private fun isServiceRunning(context: Context, serviceClassName: String): Boolean {
         val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
