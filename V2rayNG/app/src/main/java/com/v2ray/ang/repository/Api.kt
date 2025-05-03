@@ -40,11 +40,13 @@ interface Api {
 
         operator fun invoke(): Api = retrofit.create(Api::class.java)
 
-        // دریافت پیکربندی‌ها از تمام ساب‌اسکریپشن‌ها
         fun fetchAllSubscriptions(): Single<List<String>> {
             return Single.fromCallable {
                 val subscriptions = MmkvManager.decodeSubscriptions()
                 val configsList = mutableListOf<String>()
+                if (subscriptions.isEmpty()) {
+                    Log.e(AppConfig.TAG, "No subscriptions found in MmkvManager")
+                }
                 subscriptions.forEach { (id, sub) ->
                     if (sub.enabled && !sub.url.isNullOrEmpty()) {
                         try {
@@ -52,12 +54,21 @@ interface Api {
                             val configString = config.string()
                             if (configString.isNotEmpty()) {
                                 configsList.add(configString)
-                                Log.d(AppConfig.TAG, "ساب‌اسکریپشن $id با موفقیت به‌روزرسانی شد")
+                                Log.d(AppConfig.TAG, "Subscription $id updated successfully: ${sub.url}")
+                            } else {
+                                Log.w(AppConfig.TAG, "Empty config received for subscription $id: ${sub.url}")
                             }
                         } catch (e: Exception) {
-                            Log.e(AppConfig.TAG, "خطا در به‌روزرسانی ساب‌اسکریپشن $id: ${e.message}")
+                            Log.e(AppConfig.TAG, "Error updating subscription $id (${sub.url}): ${e.message}", e)
                         }
+                    } else {
+                        Log.w(AppConfig.TAG, "Subscription $id is disabled or has no URL")
                     }
+                }
+                if (configsList.isEmpty()) {
+                    Log.e(AppConfig.TAG, "No configs were fetched from any subscription")
+                } else {
+                    Log.d(AppConfig.TAG, "Fetched ${configsList.size} subscription configs")
                 }
                 configsList
             }
