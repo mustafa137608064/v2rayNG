@@ -34,7 +34,7 @@
         android:title="Support Team" />
         <item
         android:id="@+id/nav_tutorial_web"
-        android:icon="@drawable/ic_feedback_24dp"
+        android:icon="@drawable/ic_question_mark_24dp"
         android:title="Tutorial" />
 
     </group>
