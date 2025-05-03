@@ -48,6 +48,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.v2ray.ang.repository.Api
 import com.v2ray.ang.repository.Repositry
+import android.app.ActivityManager
 import android.text.TextUtils
 import java.net.IDN
 import com.v2ray.ang.AppConfig.ANG_PACKAGE
@@ -333,7 +334,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 V2RayServiceManager.stopVService(this)
                 delay(2000) // افزایش تأخیر به 2000 میلی‌ثانیه
                 // بررسی اینکه آیا سرویس هنوز در حال اجرا است
-                if (V2RayServiceManager.isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
+                if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
                     toastError("سرویس هنوز در حال اجرا است، لطفاً دوباره تلاش کنید")
                     return
                 }
@@ -886,7 +887,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     // متد کمکی برای بررسی وضعیت سرویس
     private fun isServiceRunning(context: android.content.Context, serviceClassName: String): Boolean {
-        val manager = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val manager = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as ActivityManager
         for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
             if (serviceClassName == service.service.className) {
                 return true
