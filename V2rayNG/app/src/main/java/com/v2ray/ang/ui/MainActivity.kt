@@ -849,8 +849,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             }
             R.id.nav_check_update -> {
                 val updateUrl = "https://update.com"
-               .Unlock all of MainActivity.kt (1,176 lines)
-
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
                 try {
                     startActivity(intent)
