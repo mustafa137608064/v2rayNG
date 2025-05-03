@@ -813,6 +813,24 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     toast("Cannot open URL: ${e.message}")
                 }
             }
+            R.id.nav_tutorial_web -> {
+                val tutorialUrl = "https://tutorial.com"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tutorialUrl))
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
+            }
+            R.id.nav_report_problem -> {
+                val reportUrl = "https://report.com"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(reportUrl))
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
+            }
             R.id.nav_about_us -> {
                 val aboutusUrl = "https://about.com"
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(aboutusUrl))
