@@ -56,7 +56,7 @@
                             android:id="@+id/tv_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:maxLines="2"
+                            android:maxLines="4"
                             android:minLines="1"
                             android:textAppearance="@style/TextAppearance.AppCompat.Subhead" />
 
@@ -64,7 +64,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:paddingTop="@dimen/padding_spacing_dp8">
+                            android:paddingTop="@dimen/padding_spacing_dp8"
+                            android:visibility="gone">
 
                             <androidx.constraintlayout.widget.ConstraintLayout
                                 android:id="@+id/layout_subscription"
@@ -191,7 +192,8 @@
                 android:orientation="horizontal"
                 android:paddingStart="@dimen/padding_spacing_dp8"
                 android:paddingTop="@dimen/padding_spacing_dp8"
-                android:paddingEnd="@dimen/padding_spacing_dp8">
+                android:paddingEnd="@dimen/padding_spacing_dp8"
+                android:visibility="gone">
 
                 <TextView
                     android:id="@+id/tv_type"
