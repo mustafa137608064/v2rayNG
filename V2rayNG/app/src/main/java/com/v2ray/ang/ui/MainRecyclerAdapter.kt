@@ -92,7 +92,7 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
                 holder.itemMainBinding.layoutShare.visibility = View.GONE
                 holder.itemMainBinding.layoutEdit.visibility = View.GONE
                 holder.itemMainBinding.layoutRemove.visibility = View.GONE
-                holder.itemMainBinding.layoutMore.visibility = View.VISIBLE
+                holder.itemMainBinding.layoutMore.visibility = View.GONE
 
                 //share method
                 val shareOptions = if (isCustom) share_method_more.asList().takeLast(3) else share_method_more.asList()
@@ -101,9 +101,9 @@ class MainRecyclerAdapter(val activity: MainActivity) : RecyclerView.Adapter<Mai
                     shareServer(guid, profile, position, shareOptions, if (isCustom) 2 else 0)
                 }
             } else {
-                holder.itemMainBinding.layoutShare.visibility = View.VISIBLE
-                holder.itemMainBinding.layoutEdit.visibility = View.VISIBLE
-                holder.itemMainBinding.layoutRemove.visibility = View.VISIBLE
+                holder.itemMainBinding.layoutShare.visibility = View.GONE
+                holder.itemMainBinding.layoutEdit.visibility = View.GONE
+                holder.itemMainBinding.layoutRemove.visibility = View.GONE
                 holder.itemMainBinding.layoutMore.visibility = View.GONE
 
                 //share method
