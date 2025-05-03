@@ -2,6 +2,8 @@ package com.v2ray.ang.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.ActivityManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
@@ -48,14 +50,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.v2ray.ang.repository.Api
 import com.v2ray.ang.repository.Repositry
-import android.app.ActivityManager
-import android.text.TextUtils
-import java.net.IDN
-import com.v2ray.ang.AppConfig.ANG_PACKAGE
 import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -67,6 +66,7 @@ import com.tencent.mmkv.MMKV
 import com.v2ray.ang.BuildConfig
 import java.io.File
 import java.io.FileOutputStream
+import java.net.IDN
 import java.util.concurrent.TimeUnit
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -330,10 +330,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
         try {
             // اطمینان از توقف کامل سرویس قبل از راه‌اندازی مجدد
-            if (mainViewModel.isRunning.value == true) {
+            if (mainViewModel.isRunning.value == true || isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
                 V2RayServiceManager.stopVService(this)
                 delay(2000) // افزایش تأخیر به 2000 میلی‌ثانیه
-                // بررسی اینکه آیا سرویس هنوز در حال اجرا است
+                // بررسی دوباره برای اطمینان از توقف کامل
                 if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
                     toastError("سرویس هنوز در حال اجرا است، لطفاً دوباره تلاش کنید")
                     return
@@ -347,7 +347,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun restartV2Ray() {
-        if (mainViewModel.isRunning.value == true) {
+        if (mainViewModel.isRunning.value == true || isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
             V2RayServiceManager.stopVService(this)
         }
         lifecycleScope.launch {
@@ -421,6 +421,14 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     override fun onStart() {
         super.onStart()
+        // بازنشانی وضعیت سرویس هنگام بازگشایی برنامه
+        if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
+            V2RayServiceManager.stopVService(this)
+            lifecycleScope.launch {
+                delay(2000)
+                mainViewModel.isRunning.value = false // بازنشانی وضعیت
+            }
+        }
         updateServerList() // فراخوانی متد به‌روزرسانی سرورها
     }
 
@@ -878,16 +886,21 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     override fun onDestroy() {
         super.onDestroy()
-        // اطمینان از توقف سرویس هنگام بسته شدن برنامه
-        if (mainViewModel.isRunning.value == true) {
+        // اطمینان از توقف کامل سرویس هنگام بسته شدن برنامه
+        if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
             V2RayServiceManager.stopVService(this)
+            lifecycleScope.launch {
+                delay(2000)
+                // تلاش برای پاک‌سازی کامل فرآیند
+                android.os.Process.killProcess(android.os.Process.myPid())
+            }
         }
         disposables.clear() // پاک کردن اشتراک‌های RxJava
     }
 
     // متد کمکی برای بررسی وضعیت سرویس
-    private fun isServiceRunning(context: android.content.Context, serviceClassName: String): Boolean {
-        val manager = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as ActivityManager
+    private fun isServiceRunning(context: Context, serviceClassName: String): Boolean {
+        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
             if (serviceClassName == service.service.className) {
                 return true
