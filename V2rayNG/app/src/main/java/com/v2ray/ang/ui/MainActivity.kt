@@ -322,6 +322,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             return
         }
         try {
+            // اطمینان از توقف سرویس قبل از راه‌اندازی مجدد
+            if (mainViewModel.isRunning.value == true) {
+                V2RayServiceManager.stopVService(this)
+                delay(1000) // تأخیر کوتاه برای اطمینان از توقف کامل
+            }
             V2RayServiceManager.startVService(this)
         } catch (e: Exception) {
             toastError("خطا در شروع سرویس VPN: ${e.message}")
@@ -334,7 +339,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             V2RayServiceManager.stopVService(this)
         }
         lifecycleScope.launch {
-            delay(500)
+            delay(1000) // تأخیر برای اطمینان از توقف کامل
             startV2Ray()
         }
     }
@@ -861,6 +866,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     override fun onDestroy() {
         super.onDestroy()
+        // اطمینان از توقف سرویس هنگام بسته شدن برنامه
+        if (mainViewModel.isRunning.value == true) {
+            V2RayServiceManager.stopVService(this)
+        }
         disposables.clear() // پاک کردن اشتراک‌های RxJava
     }
 }
