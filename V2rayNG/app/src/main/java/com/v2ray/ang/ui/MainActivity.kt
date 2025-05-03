@@ -80,7 +80,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private val adapter by lazy { MainRecyclerAdapter(this) }
     private val requestVpnPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
-            startV2Ray()
+            lifecycleScope.launch {
+                startV2Ray()
+            }
         }
     }
     private val requestSubSettingActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -194,12 +196,16 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             } else if ((MmkvManager.decodeSettingsString(AppConfig.PREF_MODE) ?: VPN) == VPN) {
                 val intent = VpnService.prepare(this)
                 if (intent == null) {
-                    startV2Ray()
+                    lifecycleScope.launch {
+                        startV2Ray()
+                    }
                 } else {
                     requestVpnPermission.launch(intent)
                 }
             } else {
-                startV2Ray()
+                lifecycleScope.launch {
+                    startV2Ray()
+                }
             }
         }
         binding.layoutTest.setOnClickListener {
@@ -315,7 +321,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         binding.tabGroup.isVisible = true
     }
 
-    private fun startV2Ray() {
+    private suspend fun startV2Ray() {
         val selectedServer = MmkvManager.getSelectServer()
         if (selectedServer.isNullOrEmpty()) {
             toast("لطفاً یک سرور را انتخاب کنید یا منتظر اتمام به‌روزرسانی بمانید")
@@ -843,6 +849,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             }
             R.id.nav_check_update -> {
                 val updateUrl = "https://update.com"
+               .Unlock all of MainActivity.kt (1,176 lines)
+
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
                 try {
                     startActivity(intent)
