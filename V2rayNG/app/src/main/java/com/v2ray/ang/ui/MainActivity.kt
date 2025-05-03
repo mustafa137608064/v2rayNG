@@ -363,29 +363,23 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         isUpdatingServers = true // علامت‌گذاری شروع به‌روزرسانی
         binding.fab.isEnabled = false // غیرفعال کردن دکمه fab
 
-        // درخواست خودکار برای دریافت لینک‌های ساب‌اسکریپشن
-        Api().getConfigsList()
+        // درخواست خودکار برای دریافت تمام ساب‌اسکریپشن‌ها
+        Api.fetchAllSubscriptions()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ response ->
-                // دریافت پاسخ خام (لینک‌های VLESS و VMess)
-                val configs = response.string()
+            .subscribe({ configsList ->
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         // حذف تمام سرورهای موجود
                         mainViewModel.removeAllServer()
-                        // وارد کردن لینک‌های جدید
-                        val (count, countSub) = AngConfigManager.importBatchConfig(configs, mainViewModel.subscriptionId, true)
-                        delay(500) // تأخیر کوتاه برای اطمینان از بارگذاری سرورها
+                        // وارد کردن لینک‌های جدید از تمام ساب‌اسکریپشن‌ها
+                        configsList.forEach { config ->
+                            val (count, countSub) = AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, true)
+                            delay(500) // تأخیر کوتاه برای اطمینان از بارگذاری
+                        }
                         withContext(Dispatchers.Main) {
-                            when {
-                                count > 0 -> {
-                                    toast(getString(R.string.title_import_config_count, count))
-                                    mainViewModel.reloadServerList() // به‌روزرسانی RecyclerView
-                                }
-                                countSub > 0 -> initGroupTab() // به‌روزرسانی تب‌های گروه
-                                else -> toastError(R.string.toast_failure)
-                            }
+                            toast(getString(R.string.title_import_config_count, configsList.size))
+                            mainViewModel.reloadServerList() // به‌روزرسانی RecyclerView
                             binding.pbWaiting.hide() // مخفی کردن ProgressBar
                             isUpdatingServers = false // علامت‌گذاری اتمام به‌روزرسانی
                             binding.fab.isEnabled = true // فعال کردن دکمه fab
@@ -415,10 +409,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         mainViewModel.reloadServerList()
     }
 
-    public override fun onPause() {
-        super.onPause()
-    }
-
     override fun onStart() {
         super.onStart()
         // بازنشانی وضعیت سرویس هنگام بازگشایی برنامه
@@ -429,7 +419,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 mainViewModel.isRunning.value = false // بازنشانی وضعیت
             }
         }
-        updateServerList() // فراخوانی متد به‌روزرسانی سرورها
+        // به‌روزرسانی خودکار ساب‌اسکریپشن‌ها با هر اجرا
+        updateServerList()
     }
 
     // بارگذاری منو در نوار ابزار
@@ -634,7 +625,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         try {
             toast(R.string.title_sub_update)
             Repositry.CustomResponse.Requst(
-                Api.invoke().getConfigsList(),
+                Api.invoke().getConfigsList("https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php"),
                 {
                     mainViewModel.resetServers()
                     AngConfigManager.importBatchConfig(it.string(), mainViewModel.subscriptionId, true)
