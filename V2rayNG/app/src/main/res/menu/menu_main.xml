@@ -9,9 +9,10 @@
         android:title="@string/refresh_servers"
         app:showAsAction="always" />
     
-    <!-- سایر آیتم‌ها در منوی کشویی -->
+    <!-- سایر آیتم‌ها در منوی کشویی (مخفی شده) -->
     <item
         android:title="@string/menu_options"
+        android:visible="false"
         app:showAsAction="never">
         <menu>
             <item
