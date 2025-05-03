@@ -34,7 +34,7 @@
         android:title="Support Team" />
         <item
         android:id="@+id/nav_tutorial_web"
-        android:icon="@drawable/ic_question_mark_24dp"
+        android:icon="@drawable/ic_file_24dp"
         android:title="Tutorial" />
 
     </group>
@@ -50,7 +50,7 @@
         android:title="About US" />
         <item
         android:id="@+id/nav_report_problem"
-        android:icon="@drawable/ic_document_24dp"
+        android:icon="@drawable/ic_stop_24dp"
         android:title="Report Problem!" />
         <!-- <item
             android:id="@+id/promotion"
