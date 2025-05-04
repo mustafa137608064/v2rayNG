@@ -90,25 +90,30 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <FrameLayout
-                    android:layout_width="wrap_content"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:layout_marginEnd="@dimen/padding_spacing_dp16">
+                    android:layout_gravity="bottom"
+                    android:layout_marginBottom="@dimen/view_height_dp36">
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab"
                         android:layout_width="150dp"
                         android:layout_height="150dp"
-                        android:layout_gravity="bottom|center"
-                        android:layout_marginBottom="@dimen/view_height_dp36"
                         android:clickable="true"
                         android:focusable="true"
                         android:nextFocusLeft="@+id/layout_test"
                         android:src="@drawable/ic_play_24dp"
-                        app:layout_anchorGravity="bottom|center" />
+                        android:scaleType="centerInside"
+                        android:scaleX="2.083"
+                        android:scaleY="2.083"
+                        app:backgroundTint="#00FF00"
+                        app:rippleColor="@android:color/white"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent" />
 
-                </FrameLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </androidx.coordinatorlayout.widget.CoordinatorLayout>
         </RelativeLayout>
     </LinearLayout>
@@ -125,4 +130,3 @@
     </com.google.android.material.navigation.NavigationView>
 
 </androidx.drawerlayout.widget.DrawerLayout>
-
