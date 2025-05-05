@@ -90,7 +90,7 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <FrameLayout
+               <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
@@ -104,14 +104,14 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:nextFocusLeft="@+id/layout_test"
-                    android:src="@drawable/ic_play_150dp"
-                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_play_24dp"
+                    android:scaleType="center"
                     android:padding="0dp"
-                    app:maxImageSize="150dp"
+                    app:maxImageSize="75dp"
                     app:useCompatPadding="false"
                     app:layout_anchorGravity="bottom|center_horizontal" />
             
-                </FrameLayout>
+            </FrameLayout>
             </androidx.coordinatorlayout.widget.CoordinatorLayout>
         </RelativeLayout>
     </LinearLayout>
