@@ -92,7 +92,7 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="100dp"  <!-- بازگشت به مقدار ثابت برای اطمینان از نمایش -->
+                    android:layout_height="100dp" 
                     android:layout_gravity="bottom"
                     android:layout_marginEnd="@dimen/padding_spacing_dp16">
 
