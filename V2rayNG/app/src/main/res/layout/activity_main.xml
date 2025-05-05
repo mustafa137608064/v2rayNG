@@ -90,31 +90,25 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="100dp"
-                    android:layout_gravity="bottom"
+                <FrameLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
                     android:layout_marginEnd="@dimen/padding_spacing_dp16">
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab"
                         android:layout_width="72dp"
                         android:layout_height="72dp"
+                        android:layout_gravity="bottom|end"
+                        android:layout_marginBottom="@dimen/view_height_dp36"
                         android:clickable="true"
                         android:focusable="true"
                         android:nextFocusLeft="@+id/layout_test"
                         android:src="@drawable/ic_play_24dp"
-                        android:scaleType="centerInside"
-                        android:scaleX="2.083"
-                        android:scaleY="2.083"
-                        app:backgroundTint="#00FF00"
-                        app:rippleColor="@android:color/white"
-                        app:elevation="12dp"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent" />
+                        app:layout_anchorGravity="bottom|right|end" />
 
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                </FrameLayout>
             </androidx.coordinatorlayout.widget.CoordinatorLayout>
         </RelativeLayout>
     </LinearLayout>
