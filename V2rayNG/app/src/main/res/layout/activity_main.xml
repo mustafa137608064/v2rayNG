@@ -51,7 +51,6 @@
                         android:layout_height="wrap_content"
                         android:padding="@dimen/padding_spacing_dp8"
                         app:tabIndicatorFullWidth="false"
-                        android:visibility="invisible"
                         app:tabTextAppearance="@style/TabLayoutTextStyle" />
 
                     <androidx.recyclerview.widget.RecyclerView
