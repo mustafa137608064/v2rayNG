@@ -98,10 +98,10 @@
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab"
-                        android:layout_width="72dp"
-                        android:layout_height="72dp"
+                        android:layout_width="150dp"
+                        android:layout_height="150dp"
                         android:layout_gravity="bottom|end"
-                        android:layout_marginBottom="@dimen/view_height_dp36"
+                        android:layout_marginBottom="@dimen/view_height_dp48"
                         android:clickable="true"
                         android:focusable="true"
                         android:nextFocusLeft="@+id/layout_test"
