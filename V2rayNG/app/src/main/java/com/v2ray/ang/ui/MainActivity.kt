@@ -70,7 +70,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
     private val requestSubSettingActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        initGroupTab()
+        // initGroupTab()
     }
     private val tabGroupListener = object : TabLayout.OnTabSelectedListener {
         override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -134,7 +134,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                                 toast(getString(R.string.title_import_config_count, count))
                                 mainViewModel.reloadServerList()
                             }
-                            countSub > 0 -> initGroupTab()
+                            countSub > 0 -> {
+                                // initGroupTab()
+                            }
                             else -> toastError(R.string.toast_failure)
                         }
                         binding.pbWaiting.hide()
@@ -208,12 +210,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         // اضافه کردن ساب‌اسکریپشن Mustafa در زمان راه‌اندازی
         addMustafaSubscription()
-        initGroupTab()
+        // initGroupTab()
         setupViewModel()
         migrateLegacy()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+ BUDDYGUY            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 pendingAction = Action.POST_NOTIFICATIONS
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
@@ -371,7 +373,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                             withContext(Dispatchers.Main) {
                                 toast(getString(R.string.title_import_config_count, newServers.size))
                                 mainViewModel.reloadServerList()
-                                initGroupTab()
+                                // initGroupTab()
                             }
                         } else {
                             withContext(Dispatchers.Main) {
@@ -433,7 +435,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                             if (count > 0 || countSub > 0) {
                                 toast(getString(R.string.title_import_config_count, count))
                                 mainViewModel.reloadServerList()
-                                initGroupTab()
+                                // initGroupTab()
                             } else {
                                 toastError("هیچ سروری از ${it.second.remarks} وارد نشد")
                             }
@@ -604,7 +606,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                                 toast(getString(R.string.title_import_config_count, count))
                                 mainViewModel.reloadServerList()
                             }
-                            countSub > 0 -> initGroupTab()
+                            countSub > 0 -> {
+                                // initGroupTab()
+                            }
                             else -> toastError(R.string.toast_failure)
                         }
                         binding.pbWaiting.hide()
@@ -750,7 +754,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                                         toast(getString(R.string.title_import_config_count, count))
                                         mainViewModel.reloadServerList()
                                     }
-                                    countSub > 0 -> initGroupTab()
+                                    countSub > 0 -> {
+                                        // initGroupTab()
+                                    }
                                     else -> toastError(R.string.toast_failure)
                                 }
                                 binding.pbWaiting.hide()
