@@ -18,6 +18,7 @@
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
+                        android:visibility="gone"
                 android:layout_height="?attr/actionBarSize" />
 
         </com.google.android.material.appbar.AppBarLayout>
@@ -51,7 +52,6 @@
                         android:padding="@dimen/padding_spacing_dp8"
                         app:tabIndicatorFullWidth="false"
                         app:tabMode="scrollable"
-                        android:visibility="gone"
                         app:tabTextAppearance="@style/TabLayoutTextStyle" />
 
                     <androidx.recyclerview.widget.RecyclerView
