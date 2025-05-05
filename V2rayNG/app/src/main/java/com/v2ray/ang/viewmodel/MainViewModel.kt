@@ -170,10 +170,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getSubscriptions(context: Context): Pair<MutableList<String>?, MutableList<String>?> {
-        // برای مخفی کردن منوی اشتراک‌ها، فقط گزینه پیش‌فرض را برگردانید
-        val listId = mutableListOf("")
-        val listRemarks = mutableListOf(context.getString(R.string.filter_config_all))
-        return listId to listRemarks
+        // برای مخفی کردن کامل منوی اشتراک‌ها، null برگردانید
+        return null to null
 
         // کد اصلی برای حفظ بدون تغییر
         /*
