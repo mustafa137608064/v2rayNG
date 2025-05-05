@@ -92,12 +92,12 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"  <!-- تغییر به 0dp برای تنظیم پویا -->
+                    android:layout_height="0dp" 
                     android:layout_gravity="bottom"
                     android:layout_marginEnd="@dimen/padding_spacing_dp16"
-                    app:layout_constraintHeight_min="72dp"  <!-- حداقل ارتفاع برابر با اندازه FAB -->
+                    app:layout_constraintHeight_min="72dp"  
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/layout_test">  <!-- وابستگی به بالای layout_test -->
+                    app:layout_constraintTop_toBottomOf="@id/layout_test">
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab"
