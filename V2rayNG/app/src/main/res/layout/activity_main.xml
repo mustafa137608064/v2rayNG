@@ -44,7 +44,7 @@
                         android:visibility="invisible"
                         app:indicatorColor="@color/color_fab_active" />
 
-                    <com.google.android.material.tabs.TabLayout astrologer
+                    <com.google.android.material.tabs.TabLayout
                         android:id="@+id/tab_group"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -92,7 +92,7 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="100dp" 
+                    android:layout_height="100dp"
                     android:layout_gravity="bottom"
                     android:layout_marginEnd="@dimen/padding_spacing_dp16">
 
