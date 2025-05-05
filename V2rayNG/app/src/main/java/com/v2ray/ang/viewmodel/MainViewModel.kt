@@ -34,7 +34,7 @@ import java.util.Collections
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var serverList = MmkvManager.decodeServerList()
-    var subscriptionId: String = MmkvManager.decodeSettingsString(AppConfig.CACHE_SUBSCRIPTION_ID, "").orEmpty()
+    var subscriptionId: String = "" // همیشه پیش‌فرض
     var keywordFilter = ""
     val serversCache = mutableListOf<ServersCache>()
     val isRunning by lazy { MutableLiveData<Boolean>() }
@@ -163,14 +163,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun subscriptionIdChanged(id: String) {
-        if (subscriptionId != id) {
-            subscriptionId = id
-            MmkvManager.encodeSettings(AppConfig.CACHE_SUBSCRIPTION_ID, subscriptionId)
-            reloadServerList()
-        }
+        // همیشه به حالت پیش‌فرض بدون اشتراک
+        subscriptionId = ""
+        MmkvManager.encodeSettings(AppConfig.CACHE_SUBSCRIPTION_ID, subscriptionId)
+        reloadServerList()
     }
 
     fun getSubscriptions(context: Context): Pair<MutableList<String>?, MutableList<String>?> {
+        // برای مخفی کردن منوی اشتراک‌ها، فقط گزینه پیش‌فرض را برگردانید
+        val listId = mutableListOf("")
+        val listRemarks = mutableListOf(context.getString(R.string.filter_config_all))
+        return listId to listRemarks
+
+        // کد اصلی برای حفظ بدون تغییر
+        /*
         val subscriptions = MmkvManager.decodeSubscriptions()
         if (subscriptionId.isNotEmpty() && !subscriptions.map { it.first }.contains(subscriptionId)) {
             subscriptionIdChanged("")
@@ -183,6 +189,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val listRemarks = subscriptions.map { it.second.remarks }.toMutableList()
         listRemarks.add(0, context.getString(R.string.filter_config_all))
         return listId to listRemarks
+        */
     }
 
     fun getPosition(guid: String): Int {
