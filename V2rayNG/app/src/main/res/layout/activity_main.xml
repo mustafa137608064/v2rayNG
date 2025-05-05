@@ -104,7 +104,7 @@
     android:clickable="true"
     android:focusable="true"
     android:nextFocusLeft="@+id/layout_test"
-    android:src="@drawable/ic_play_75dp"
+    android:src="@drawable/ic_v2plus"
     android:scaleType="centerInside"
     app:fabCustomSize="150dp"
     app:maxImageSize="75dp"
