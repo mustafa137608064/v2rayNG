@@ -44,7 +44,7 @@
                         android:visibility="invisible"
                         app:indicatorColor="@color/color_fab_active" />
 
-                    <com.google.android.material.tabs.TabLayout
+                    <com.google.android.material.tabs.TabLayout astrologer
                         android:id="@+id/tab_group"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -92,12 +92,9 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp" 
+                    android:layout_height="100dp"  <!-- بازگشت به مقدار ثابت برای اطمینان از نمایش -->
                     android:layout_gravity="bottom"
-                    android:layout_marginEnd="@dimen/padding_spacing_dp16"
-                    app:layout_constraintHeight_min="72dp"  
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/layout_test">
+                    android:layout_marginEnd="@dimen/padding_spacing_dp16">
 
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab"
@@ -110,6 +107,7 @@
                         android:scaleType="centerInside"
                         android:scaleX="2.083"
                         android:scaleY="2.083"
+                        app:backgroundTint="#00FF00"
                         app:rippleColor="@android:color/white"
                         app:elevation="12dp"
                         app:layout_constraintBottom_toBottomOf="parent"
