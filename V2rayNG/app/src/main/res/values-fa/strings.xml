@@ -269,7 +269,7 @@
     <string name="title_del_duplicate_config_count">حذف %d کانفیگ تکراری</string>
 
     <string name="title_del_config_count">حذف %d کانفیگ</string>
-    <string name="title_import_config_count">سرور ها با موفقیت بروزرسانی شدند</string>
+    <string name="title_import_config_count">سرور ها با موفقیت بروزرسانی شدند ✅</string>
     <string name="title_export_config_count">صادر کردن %d کانفیگ</string>
     <string name="title_update_config_count">آپدیت کردن %d کانفیگ</string>
     <string name="tasker_start_service">شروع خدمات</string>
