@@ -13,6 +13,7 @@ import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
@@ -357,7 +358,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    // New method to fetch HTML content from a URL
+    // Method to fetch HTML content from a URL
     private suspend fun fetchHtmlContent(url: String): String? {
         return withContext(Dispatchers.IO) {
             try {
@@ -383,7 +384,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    // New method to show dialog with web content
+    // Method to show dialog with web content
     private fun showWebContentDialog(htmlContent: String) {
         val dialog = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar)
             .create()
@@ -397,6 +398,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
             setBackgroundColor(Color.WHITE)
+            // Enable JavaScript
+            settings.javaScriptEnabled = true
             loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
         }
         container.addView(webView)
@@ -418,23 +421,25 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         dialog.setView(container)
 
-        // Set dialog dimensions
+        // Set dialog dimensions and center it
         dialog.setOnShowListener {
             val window = dialog.window
             val displayMetrics = resources.displayMetrics
             val width = (displayMetrics.widthPixels * 0.8).toInt()
-            val height = (displayMetrics.heightPixels * 0.8).toInt()
+            val height = (displayMetrics.heightPixels * 0.5).toInt()
             window?.setLayout(width, height)
             window?.setBackgroundDrawableResource(android.R.color.transparent)
+            // Center the dialog
+            window?.attributes?.gravity = Gravity.CENTER
         }
 
         dialog.show()
     }
 
     private fun updateServerList() {
-        binding.pbWaiting.show()
+        binding(pbWaiting).show()
         isUpdatingServers = true
-        binding.fab.isEnabled = false
+        binding(fab).isEnabled = false
 
         lifecycleScope.launch(Dispatchers.IO) {
             // Fetch HTML content from the web page
@@ -481,18 +486,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                                 }
                             } finally {
                                 withContext(Dispatchers.Main) {
-                                    binding.pbWaiting.hide()
+                                    binding(pbWaiting).hide()
                                     isUpdatingServers = false
-                                    binding.fab.isEnabled = true
+                                    binding(fab).isEnabled = true
                                 }
                             }
                         }
                     }, { error ->
                         toastError("خطا در دریافت سرورها: ${error.message}")
                         Log.e(AppConfig.TAG, "Error fetching subscriptions: ${error.message}", error)
-                        binding.pbWaiting.hide()
+                        binding(pbWaiting).hide()
                         isUpdatingServers = false
-                        binding.fab.isEnabled = true
+                        binding(fab).isEnabled = true
                     })
                     .let { disposables.add(it) }
             }
@@ -705,12 +710,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                             countSub > 0 -> initGroupTab()
                             else -> toastError(R.string.toast_failure)
                         }
-                        binding.pbWaiting.hide()
+                        binding(pbWaiting).hide()
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         toastError(R.string.toast_failure)
-                        binding.pbWaiting.hide()
+                        binding(pbWaiting).hide()
                     }
                     Log.e(AppConfig.TAG, "Failed to import batch config", e)
                 }
@@ -733,7 +738,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun exportAll() {
-        binding.pbWaiting.show()
+        binding(pbWaiting).show()
         lifecycleScope.launch(Dispatchers.IO) {
             val ret = mainViewModel.exportAllServer()
             launch(Dispatchers.Main) {
@@ -741,7 +746,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     toast(getString(R.string.title_export_config_count, ret))
                 else
                     toastError(R.string.toast_failure)
-                binding.pbWaiting.hide()
+                binding(pbWaiting).hide()
             }
         }
     }
@@ -749,13 +754,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun delAllConfig() {
         AlertDialog.Builder(this).setMessage(R.string.del_config_comfirm)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                binding.pbWaiting.show()
+                binding(pbWaiting).show()
                 lifecycleScope.launch(Dispatchers.IO) {
                     val ret = mainViewModel.removeAllServer()
                     launch(Dispatchers.Main) {
                         mainViewModel.reloadServerList()
                         toast(getString(R.string.title_del_config_count, ret))
-                        binding.pbWaiting.hide()
+                        binding(pbWaiting).hide()
                     }
                 }
             }
@@ -766,13 +771,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun delDuplicateConfig() {
         AlertDialog.Builder(this).setMessage(R.string.del_config_comfirm)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                binding.pbWaiting.show()
+                binding(pbWaiting).show()
                 lifecycleScope.launch(Dispatchers.IO) {
                     val ret = mainViewModel.removeDuplicateServer()
                     launch(Dispatchers.Main) {
                         mainViewModel.reloadServerList()
                         toast(getString(R.string.title_del_duplicate_config_count, ret))
-                        binding.pbWaiting.hide()
+                        binding(pbWaiting).hide()
                     }
                 }
             }
@@ -783,13 +788,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun delInvalidConfig() {
         AlertDialog.Builder(this).setMessage(R.string.del_invalid_config_comfirm)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                binding.pbWaiting.show()
+                binding(pbWaiting).show()
                 lifecycleScope.launch(Dispatchers.IO) {
                     val ret = mainViewModel.removeInvalidServer()
                     launch(Dispatchers.Main) {
                         mainViewModel.reloadServerList()
                         toast(getString(R.string.title_del_config_count, ret))
-                        binding.pbWaiting.hide()
+                        binding(pbWaiting).hide()
                     }
                 }
             }
@@ -798,12 +803,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun sortByTestResults() {
-        binding.pbWaiting.show()
+        binding(pbWaiting).show()
         lifecycleScope.launch(Dispatchers.IO) {
             mainViewModel.sortByTestResults()
             launch(Dispatchers.Main) {
                 mainViewModel.reloadServerList()
-                binding.pbWaiting.hide()
+                binding(pbWaiting).hide()
             }
         }
     }
@@ -851,12 +856,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                                     countSub > 0 -> initGroupTab()
                                     else -> toastError(R.string.toast_failure)
                                 }
-                                binding.pbWaiting.hide()
+                                binding(pbWaiting).hide()
                             }
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
                                 toastError(R.string.toast_failure)
-                                binding.pbWaiting.hide()
+                                binding(pbWaiting).hide()
                             }
                             Log.e(AppConfig.TAG, "Failed to import batch config", e)
                         }
@@ -926,7 +931,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 try {
                     startActivity(intent)
                 } catch (e: Exception) {
-                    toast("Cannot openvisualstudio.com")
                     toast("Cannot open URL: ${e.message}")
                 }
             }
