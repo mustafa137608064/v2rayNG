@@ -438,7 +438,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         lifecycleScope.launch(Dispatchers.IO) {
             // Fetch HTML content from the web page
-            val htmlContent = fetchHtmlContent("https://test.com/banner.html")
+            val htmlContent = fetchHtmlContent("https://v2plus.wuaze.com/login.php")
             withContext(Dispatchers.Main) {
                 // Check if HTML content is not empty or null
                 if (!htmlContent.isNullOrBlank() && htmlContent.trim().contains("<html", ignoreCase = true)) {
