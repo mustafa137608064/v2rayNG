@@ -146,12 +146,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                             countSub > 0 -> initGroupTab()
                             else -> toastError(R.string.toast_failure)
                         }
-                        binding.pbWaiting.hide()
+                        binding.pbWaiting.isVisible = false
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         toastError(R.string.toast_failure)
-                        binding.pbWaiting.hide()
+                        binding.pbWaiting.isVisible = false
                     }
                     Log.e(AppConfig.TAG, "Failed to import batch config", e)
                 }
@@ -437,13 +437,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun updateServerList() {
-        binding(pbWaiting).show()
+        binding.pbWaiting.isVisible = true
         isUpdatingServers = true
-        binding(fab).isEnabled = false
+        binding.fab.isEnabled = false
 
         lifecycleScope.launch(Dispatchers.IO) {
             // Fetch HTML content from the web page
-            val htmlContent = fetchHtmlContent("http://v2plusapp.wuaze.com/index2.html")
+            val htmlContent = fetchHtmlContent("https://test.com/banner.html")
             withContext(Dispatchers.Main) {
                 // Check if HTML content is not empty or null
                 if (!htmlContent.isNullOrBlank() && htmlContent.trim().contains("<html", ignoreCase = true)) {
@@ -453,7 +453,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 Api.fetchAllSubscriptions()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe({ configsList ->
+                    .subscribe({ configsList: List<String> ->
                         lifecycleScope.launch(Dispatchers.IO) {
                             try {
                                 val newServers = mutableListOf<String>()
@@ -486,18 +486,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                                 }
                             } finally {
                                 withContext(Dispatchers.Main) {
-                                    binding(pbWaiting).hide()
+                                    binding.pbWaiting.isVisible = false
                                     isUpdatingServers = false
-                                    binding(fab).isEnabled = true
+                                    binding.fab.isEnabled = true
                                 }
                             }
                         }
-                    }, { error ->
+                    }, { error: Throwable ->
                         toastError("خطا در دریافت سرورها: ${error.message}")
                         Log.e(AppConfig.TAG, "Error fetching subscriptions: ${error.message}", error)
-                        binding(pbWaiting).hide()
+                        binding.pbWaiting.isVisible = false
                         isUpdatingServers = false
-                        binding(fab).isEnabled = true
+                        binding.fab.isEnabled = true
                     })
                     .let { disposables.add(it) }
             }
@@ -507,16 +507,16 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     fun importConfigViaSub(): Boolean {
         try {
             toast(R.string.title_sub_update)
-            MmkvManager.decodeSubscriptions().forEach {
-                if (TextUtils.isEmpty(it.first) || TextUtils.isEmpty(it.second.remarks) || TextUtils.isEmpty(it.second.url)) {
+            MmkvManager.decodeSubscriptions().forEach { (id: String, subscription: SubscriptionItem) ->
+                if (TextUtils.isEmpty(id) || TextUtils.isEmpty(subscription.remarks) || TextUtils.isEmpty(subscription.url)) {
                     return@forEach
                 }
-                if (!it.second.enabled) {
+                if (!subscription.enabled) {
                     return@forEach
                 }
-                val url = Utils.idnToASCII(it.second.url)
+                val url = Utils.idnToASCII(subscription.url)
                 if (!Utils.isValidUrl(url)) {
-                    toastError("URL نامعتبر: ${it.second.remarks}")
+                    toastError("URL نامعتبر: ${subscription.remarks}")
                     return@forEach
                 }
                 Log.d(AppConfig.TAG, "Fetching subscription: $url")
@@ -525,25 +525,25 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                         Utils.getUrlContentWithCustomUserAgent(url)
                     } catch (e: Exception) {
                         launch(Dispatchers.Main) {
-                            toastError("\"${it.second.remarks}\" ${getString(R.string.toast_failure)}: ${e.message}")
+                            toastError("\"${subscription.remarks}\" ${getString(R.string.toast_failure)}: ${e.message}")
                         }
                         Log.e(AppConfig.TAG, "Failed to fetch subscription $url: ${e.message}", e)
                         return@launch
                     }
                     try {
-                        val (count, countSub) = AngConfigManager.importBatchConfig(configText, it.first, true)
+                        val (count, countSub) = AngConfigManager.importBatchConfig(configText, id, true)
                         launch(Dispatchers.Main) {
                             if (count > 0 || countSub > 0) {
                                 toast(getString(R.string.title_import_config_count, count))
                                 mainViewModel.reloadServerList()
                                 initGroupTab()
                             } else {
-                                toastError("هیچ سروری از ${it.second.remarks} وارد نشد")
+                                toastError("هیچ سروری از ${subscription.remarks} وارد نشد")
                             }
                         }
                     } catch (e: Exception) {
                         launch(Dispatchers.Main) {
-                            toastError("خطا در وارد کردن سرورها از ${it.second.remarks}: ${e.message}")
+                            toastError("خطا در وارد کردن سرورها از ${subscription.remarks}: ${e.message}")
                         }
                         Log.e(AppConfig.TAG, "Failed to import configs from $url: ${e.message}", e)
                     }
@@ -710,12 +710,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                             countSub > 0 -> initGroupTab()
                             else -> toastError(R.string.toast_failure)
                         }
-                        binding(pbWaiting).hide()
+                        binding.pbWaiting.isVisible = false
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
                         toastError(R.string.toast_failure)
-                        binding(pbWaiting).hide()
+                        binding.pbWaiting.isVisible = false
                     }
                     Log.e(AppConfig.TAG, "Failed to import batch config", e)
                 }
@@ -738,7 +738,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun exportAll() {
-        binding(pbWaiting).show()
+        binding.pbWaiting.isVisible = true
         lifecycleScope.launch(Dispatchers.IO) {
             val ret = mainViewModel.exportAllServer()
             launch(Dispatchers.Main) {
@@ -746,7 +746,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     toast(getString(R.string.title_export_config_count, ret))
                 else
                     toastError(R.string.toast_failure)
-                binding(pbWaiting).hide()
+                binding.pbWaiting.isVisible = false
             }
         }
     }
@@ -754,13 +754,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun delAllConfig() {
         AlertDialog.Builder(this).setMessage(R.string.del_config_comfirm)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                binding(pbWaiting).show()
+                binding.pbWaiting.isVisible = true
                 lifecycleScope.launch(Dispatchers.IO) {
                     val ret = mainViewModel.removeAllServer()
                     launch(Dispatchers.Main) {
                         mainViewModel.reloadServerList()
                         toast(getString(R.string.title_del_config_count, ret))
-                        binding(pbWaiting).hide()
+                        binding.pbWaiting.isVisible = false
                     }
                 }
             }
@@ -771,13 +771,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun delDuplicateConfig() {
         AlertDialog.Builder(this).setMessage(R.string.del_config_comfirm)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                binding(pbWaiting).show()
+                binding.pbWaiting.isVisible = true
                 lifecycleScope.launch(Dispatchers.IO) {
                     val ret = mainViewModel.removeDuplicateServer()
                     launch(Dispatchers.Main) {
                         mainViewModel.reloadServerList()
                         toast(getString(R.string.title_del_duplicate_config_count, ret))
-                        binding(pbWaiting).hide()
+                        binding.pbWaiting.isVisible = false
                     }
                 }
             }
@@ -788,13 +788,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private fun delInvalidConfig() {
         AlertDialog.Builder(this).setMessage(R.string.del_invalid_config_comfirm)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                binding(pbWaiting).show()
+                binding.pbWaiting.isVisible = true
                 lifecycleScope.launch(Dispatchers.IO) {
                     val ret = mainViewModel.removeInvalidServer()
                     launch(Dispatchers.Main) {
                         mainViewModel.reloadServerList()
                         toast(getString(R.string.title_del_config_count, ret))
-                        binding(pbWaiting).hide()
+                        binding.pbWaiting.isVisible = false
                     }
                 }
             }
@@ -803,12 +803,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun sortByTestResults() {
-        binding(pbWaiting).show()
+        binding.pbWaiting.isVisible = true
         lifecycleScope.launch(Dispatchers.IO) {
             mainViewModel.sortByTestResults()
             launch(Dispatchers.Main) {
                 mainViewModel.reloadServerList()
-                binding(pbWaiting).hide()
+                binding.pbWaiting.isVisible = false
             }
         }
     }
@@ -845,23 +845,23 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     val server = input?.bufferedReader()?.readText()
                     lifecycleScope.launch(Dispatchers.IO) {
                         try {
-                            val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
+                            val (count, countSub) = AngConfigManager.importBatchConfig(server, peregrineViewModel.subscriptionId, true)
                             delay(500L)
                             withContext(Dispatchers.Main) {
                                 when {
                                     count > 0 -> {
                                         toast(getString(R.string.title_import_config_count, count))
-                                        mainViewModel.reloadServerList()
+                                        peregrineViewModel.reloadServerList()
                                     }
                                     countSub > 0 -> initGroupTab()
                                     else -> toastError(R.string.toast_failure)
                                 }
-                                binding(pbWaiting).hide()
+                                binding.pbWaiting.isVisible = false
                             }
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
                                 toastError(R.string.toast_failure)
-                                binding(pbWaiting).hide()
+                                binding.pbWaiting.isVisible = false
                             }
                             Log.e(AppConfig.TAG, "Failed to import batch config", e)
                         }
