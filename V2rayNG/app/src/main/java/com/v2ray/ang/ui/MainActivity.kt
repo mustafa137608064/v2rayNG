@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
@@ -15,6 +16,11 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.WebView
+import android.widget.FrameLayout
+import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -55,6 +61,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import com.v2ray.ang.dto.SubscriptionItem
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -233,27 +241,27 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     // متد جدید برای اضافه کردن لینک mustafa.php به ساب‌اسکریپشن‌ها
-private fun addMustafaSubscription() {
-    // خواندن مقدار app_name از strings.xml
-    val appName = getString(R.string.app_name)
-    
-    // ساخت URL با استفاده از app_name
-    val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
-    
-    val existingSubscriptions = MmkvManager.decodeSubscriptions()
-    if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
-        val subscriptionId = Utils.getUuid()
-        val subscriptionItem = SubscriptionItem(
-            remarks = "$appName Subscription",
-            url = mustafaUrl,
-            enabled = true
-        )
-        MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
-        Log.d(AppConfig.TAG, "Added $appName subscription with ID: $subscriptionId")
-    } else {
-        Log.d(AppConfig.TAG, "$appName subscription already exists")
+    private fun addMustafaSubscription() {
+        // خواندن مقدار app_name از strings.xml
+        val appName = getString(R.string.app_name)
+        
+        // ساخت URL با استفاده از app_name
+        val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
+        
+        val existingSubscriptions = MmkvManager.decodeSubscriptions()
+        if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
+            val subscriptionId = Utils.getUuid()
+            val subscriptionItem = SubscriptionItem(
+                remarks = "$appName Subscription",
+                url = mustafaUrl,
+                enabled = true
+            )
+            MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
+            Log.d(AppConfig.TAG, "Added $appName subscription with ID: $subscriptionId")
+        } else {
+            Log.d(AppConfig.TAG, "$appName subscription already exists")
+        }
     }
-}
 
     @SuppressLint("NotifyDataSetChanged")
     private fun setupViewModel() {
@@ -349,61 +357,146 @@ private fun addMustafaSubscription() {
         }
     }
 
+    // New method to fetch HTML content from a URL
+    private suspend fun fetchHtmlContent(url: String): String? {
+        return withContext(Dispatchers.IO) {
+            try {
+                val connection = URL(url).openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connectTimeout = 5000
+                connection.readTimeout = 5000
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0")
+                connection.connect()
+
+                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                    val content = connection.inputStream.bufferedReader().use { it.readText() }
+                    connection.disconnect()
+                    content
+                } else {
+                    connection.disconnect()
+                    null
+                }
+            } catch (e: Exception) {
+                Log.e(AppConfig.TAG, "Failed to fetch HTML content from $url", e)
+                null
+            }
+        }
+    }
+
+    // New method to show dialog with web content
+    private fun showWebContentDialog(htmlContent: String) {
+        val dialog = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar)
+            .create()
+        dialog.setCancelable(false)
+
+        // Create a FrameLayout to hold WebView and close button
+        val container = FrameLayout(this)
+        val webView = WebView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(Color.WHITE)
+            loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+        }
+        container.addView(webView)
+
+        // Add close button
+        val closeButton = ImageView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(80, 80).apply {
+                gravity = GravityCompat.END
+                topMargin = -40
+                rightMargin = -40
+            }
+            setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            setColorFilter(Color.RED)
+            setOnClickListener {
+                dialog.dismiss()
+            }
+        }
+        container.addView(closeButton)
+
+        dialog.setView(container)
+
+        // Set dialog dimensions
+        dialog.setOnShowListener {
+            val window = dialog.window
+            val displayMetrics = resources.displayMetrics
+            val width = (displayMetrics.widthPixels * 0.8).toInt()
+            val height = (displayMetrics.heightPixels * 0.8).toInt()
+            window?.setLayout(width, height)
+            window?.setBackgroundDrawableResource(android.R.color.transparent)
+        }
+
+        dialog.show()
+    }
+
     private fun updateServerList() {
         binding.pbWaiting.show()
         isUpdatingServers = true
         binding.fab.isEnabled = false
 
-        Api.fetchAllSubscriptions()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ configsList ->
-                lifecycleScope.launch(Dispatchers.IO) {
-                    try {
-                        val newServers = mutableListOf<String>()
-                        configsList.forEach { config ->
-                            val (count, countSub) = AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, false)
-                            if (count > 0 || countSub > 0) {
-                                newServers.add(config)
-                                Log.d(AppConfig.TAG, "Imported $count servers and $countSub subscriptions")
-                            }
-                        }
-                        if (newServers.isNotEmpty()) {
-                            mainViewModel.removeAllServer()
-                            newServers.forEach { config ->
-                                AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, true)
-                            }
-                            withContext(Dispatchers.Main) {
-                                toast(getString(R.string.title_import_config_count, newServers.size))
-                                mainViewModel.reloadServerList()
-                                initGroupTab()
-                            }
-                        } else {
-                            withContext(Dispatchers.Main) {
-                                toastError("هیچ سروری از ساب‌اسکریپشن‌ها دریافت نشد")
-                            }
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            toastError("خطا در وارد کردن سرورها: ${e.message}")
-                            Log.e(AppConfig.TAG, "Failed to import configs", e)
-                        }
-                    } finally {
-                        withContext(Dispatchers.Main) {
-                            binding.pbWaiting.hide()
-                            isUpdatingServers = false
-                            binding.fab.isEnabled = true
-                        }
-                    }
+        lifecycleScope.launch(Dispatchers.IO) {
+            // Fetch HTML content from the web page
+            val htmlContent = fetchHtmlContent("https://test.com/banner.html")
+            withContext(Dispatchers.Main) {
+                // Check if HTML content is not empty or null
+                if (!htmlContent.isNullOrBlank() && htmlContent.trim().contains("<html", ignoreCase = true)) {
+                    showWebContentDialog(htmlContent)
                 }
-            }, { error ->
-                toastError("خطا در دریافت سرورها: ${error.message}")
-                Log.e(AppConfig.TAG, "Error fetching subscriptions: ${error.message}", error)
-                binding.pbWaiting.hide()
-                isUpdatingServers = false
-                binding.fab.isEnabled = true
-            })
-            .let { disposables.add(it) }
+                // Proceed with server update
+                Api.fetchAllSubscriptions()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({ configsList ->
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            try {
+                                val newServers = mutableListOf<String>()
+                                configsList.forEach { config ->
+                                    val (count, countSub) = AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, false)
+                                    if (count > 0 || countSub > 0) {
+                                        newServers.add(config)
+                                        Log.d(AppConfig.TAG, "Imported $count servers and $countSub subscriptions")
+                                    }
+                                }
+                                if (newServers.isNotEmpty()) {
+                                    mainViewModel.removeAllServer()
+                                    newServers.forEach { config ->
+                                        AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, true)
+                                    }
+                                    withContext(Dispatchers.Main) {
+                                        toast(getString(R.string.title_import_config_count, newServers.size))
+                                        mainViewModel.reloadServerList()
+                                        initGroupTab()
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        toastError("هیچ سروری از ساب‌اسکریپشن‌ها دریافت نشد")
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    toastError("خطا در وارد کردن سرورها: ${e.message}")
+                                    Log.e(AppConfig.TAG, "Failed to import configs", e)
+                                }
+                            } finally {
+                                withContext(Dispatchers.Main) {
+                                    binding.pbWaiting.hide()
+                                    isUpdatingServers = false
+                                    binding.fab.isEnabled = true
+                                }
+                            }
+                        }
+                    }, { error ->
+                        toastError("خطا در دریافت سرورها: ${error.message}")
+                        Log.e(AppConfig.TAG, "Error fetching subscriptions: ${error.message}", error)
+                        binding.pbWaiting.hide()
+                        isUpdatingServers = false
+                        binding.fab.isEnabled = true
+                    })
+                    .let { disposables.add(it) }
+            }
+        }
     }
 
     fun importConfigViaSub(): Boolean {
@@ -833,6 +926,7 @@ private fun addMustafaSubscription() {
                 try {
                     startActivity(intent)
                 } catch (e: Exception) {
+                    toast("Cannot openvisualstudio.com")
                     toast("Cannot open URL: ${e.message}")
                 }
             }
