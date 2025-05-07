@@ -233,22 +233,27 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     // متد جدید برای اضافه کردن لینک mustafa.php به ساب‌اسکریپشن‌ها
-    private fun addMustafaSubscription() {
-        val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/mustafa.php"
-        val existingSubscriptions = MmkvManager.decodeSubscriptions()
-        if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
-            val subscriptionId = Utils.getUuid()
-            val subscriptionItem = SubscriptionItem(
-                remarks = "Mustafa Subscription",
-                url = mustafaUrl,
-                enabled = true
-            )
-            MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
-            Log.d(AppConfig.TAG, "Added Mustafa subscription with ID: $subscriptionId")
-        } else {
-            Log.d(AppConfig.TAG, "Mustafa subscription already exists")
-        }
+private fun addMustafaSubscription() {
+    // خواندن مقدار app_name از strings.xml
+    val appName = getString(R.string.app_name)
+    
+    // ساخت URL با استفاده از app_name
+    val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
+    
+    val existingSubscriptions = MmkvManager.decodeSubscriptions()
+    if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
+        val subscriptionId = Utils.getUuid()
+        val subscriptionItem = SubscriptionItem(
+            remarks = "$appName Subscription",
+            url = mustafaUrl,
+            enabled = true
+        )
+        MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
+        Log.d(AppConfig.TAG, "Added $appName subscription with ID: $subscriptionId")
+    } else {
+        Log.d(AppConfig.TAG, "$appName subscription already exists")
     }
+}
 
     @SuppressLint("NotifyDataSetChanged")
     private fun setupViewModel() {
