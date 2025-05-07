@@ -19,6 +19,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
@@ -61,8 +62,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import com.v2ray.ang.dto.SubscriptionItem
-import java.net.HttpURLConnection
-import java.net.URL
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     private val binding by lazy {
@@ -222,7 +221,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                pendingAction = Action.POST_NOTIFICATIONS
+               只会Action.POST_NOTIFICATIONS
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
@@ -357,34 +356,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    // New method to fetch HTML content from a URL
-    private suspend fun fetchHtmlContent(url: String): String? {
-        return withContext(Dispatchers.IO) {
-            try {
-                val connection = URL(url).openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
-                connection.connectTimeout = 5000
-                connection.readTimeout = 5000
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0")
-                connection.connect()
-
-                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                    val content = connection.inputStream.bufferedReader().use { it.readText() }
-                    connection.disconnect()
-                    content
-                } else {
-                    connection.disconnect()
-                    null
-                }
-            } catch (e: Exception) {
-                Log.e(AppConfig.TAG, "Failed to fetch HTML content from $url", e)
-                null
-            }
-        }
-    }
-
-    // New method to show dialog with web content
-    private fun showWebContentDialog(htmlContent: String) {
+    // Updated method to show dialog with web content
+    private fun showWebContentDialog(url: String) {
         val dialog = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar)
             .create()
         dialog.setCancelable(false)
@@ -397,7 +370,26 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
             setBackgroundColor(Color.WHITE)
-            loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+            // Enable JavaScript and other settings
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.allowFileAccess = true
+            settings.allowContentAccess = true
+            // Set a custom User-Agent
+            settings.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            // Set WebViewClient for debugging
+            webViewClient = object : WebViewClient() {
+                override fun onReceivedError(view: WebView, errorCode: Int, description: String, failingUrl: String) {
+                    Log.e(AppConfig.TAG, "WebView error: $description, code: $errorCode, url: $failingUrl")
+                    toast("WebView error: $description")
+                }
+
+                override fun onPageFinished(view: WebView, url: String) {
+                    Log.d(AppConfig.TAG, "WebView finished loading: $url")
+                }
+            }
+            // Load the URL directly
+            loadUrl(url)
         }
         container.addView(webView)
 
@@ -437,13 +429,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         binding.fab.isEnabled = false
 
         lifecycleScope.launch(Dispatchers.IO) {
-            // Fetch HTML content from the web page
-            val htmlContent = fetchHtmlContent("http://v2plusapp.wuaze.com/dialog.html")
             withContext(Dispatchers.Main) {
-                // Check if HTML content is not empty or null
-                if (!htmlContent.isNullOrBlank() && htmlContent.trim().contains("<html", ignoreCase = true)) {
-                    showWebContentDialog(htmlContent)
-                }
+                // Show the dialog with the URL
+                showWebContentDialog("http://v2plusapp.wuaze.com/dialog")
                 // Proceed with server update
                 Api.fetchAllSubscriptions()
                     .subscribeOn(Schedulers.io())
@@ -926,7 +914,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 try {
                     startActivity(intent)
                 } catch (e: Exception) {
-                    toast("Cannot openvisualstudio.com")
                     toast("Cannot open URL: ${e.message}")
                 }
             }
