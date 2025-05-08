@@ -59,9 +59,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                         .setStyle(
                             NotificationCompat.BigPictureStyle()
                                 .bigPicture(bitmap)
-                                .bigLargeIcon(null) // آیکون بزرگ در حالت بازشده حذف شود
+                                .bigLargeIcon(null as Bitmap?) // اصلاح‌شده برای رفع ابهام
                         )
-                        .setLargeIcon(bitmap) // آیکون بزرگ در حالت جمع‌شده
+                        .setLargeIcon(bitmap)
                 }
             } catch (e: Exception) {
                 Log.e("FCM", "Failed to download image: $e")
