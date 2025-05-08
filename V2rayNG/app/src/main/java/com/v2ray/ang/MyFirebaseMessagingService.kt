@@ -64,7 +64,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         // ساخت نوتیفیکیشن
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.notification_icon) // آیکون PNG
+            .setSmallIcon(R.drawable.ic_notification_bell) // آیکون PNG
             .setContentTitle(title)
             .setContentText(messageBody)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
