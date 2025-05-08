@@ -211,7 +211,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         )
         binding.drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
-        binding.navView.setNavigationItemSelectedListener(this)
+ infestedView.setNavigationItemSelectedListener(this)
 
         // اضافه کردن ساب‌اسکریپشن Mustafa در زمان راه‌اندازی
         addMustafaSubscription()
@@ -356,83 +356,121 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    // Updated method to show dialog with web content
+    // متد اصلاح‌شده برای نمایش دیالوگ با بررسی display تگ v2plusdialog
     private fun showWebContentDialog(url: String) {
-        val dialog = AlertDialog.Builder(this, android.R.style.Theme_Black_NoTitleBar)
-            .create()
-        dialog.setCancelable(false)
+        lifecycleScope.launch(Dispatchers.IO) {
+            // بررسی وضعیت display تگ v2plusdialog
+            val content = try {
+                Utils.getUrlContentWithCustomUserAgent(url)
+            } catch (e: Exception) {
+                Log.e(AppConfig.TAG, "Failed to fetch dialog content: ${e.message}", e)
+                return@launch
+            }
 
-        // Create a FrameLayout to hold WebView and close button
-        val container = FrameLayout(this)
-        val webView = WebView(this).apply {
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-            setBackgroundColor(Color.WHITE)
-            // Enable JavaScript and other settings
-            settings.javaScriptEnabled = true
-            settings.domStorageEnabled = true
-            settings.allowFileAccess = true
-            settings.allowContentAccess = true
-            // Set a custom User-Agent
-            settings.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            // Set WebViewClient for debugging
-            webViewClient = object : WebViewClient() {
-                override fun onReceivedError(view: WebView, errorCode: Int, description: String, failingUrl: String) {
-                    Log.e(AppConfig.TAG, "WebView error: $description, code: $errorCode, url: $failingUrl")
-                    toast("WebView error: $description")
+            // جستجوی تگ div با کلاس v2plusdialog
+            val displayIsBlock = content.contains("""<div class="v2plusdialog"[^>]*display\s*:\s*block""".toRegex())
+
+            if (!displayIsBlock) {
+                // اگر display: none باشد، دیالوگ نمایش داده نشود
+                withContext(Dispatchers.Main) {
+                    updateServerListWithoutDialog()
+                }
+                return@launch
+            }
+
+            withContext(Dispatchers.Main) {
+                val dialog = AlertDialog.Builder(this@MainActivity, android.R.style.Theme_Black_NoTitleBar)
+                    .create()
+                dialog.setCancelable(false)
+
+                // ایجاد یک FrameLayout برای پس‌زمینه و محتوای دیالوگ
+                val container = FrameLayout(this@MainActivity)
+                container.setBackgroundColor(Color.argb(128, 0, 0, 0)) // مشکی با opacity 50%
+                container.setOnClickListener {
+                    dialog.dismiss() // بستن دیالوگ با کلیک روی پس‌زمینه
                 }
 
-                override fun onPageFinished(view: WebView, url: String) {
-                    Log.d(AppConfig.TAG, "WebView finished loading: $url")
+                // ایجاد View برای محتوای دیالوگ
+                val dialogContent = FrameLayout(this@MainActivity).apply {
+                    setBackgroundColor(Color.WHITE)
+                    layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        gravity = Gravity.CENTER
+                    }
                 }
+
+                // ایجاد WebView برای نمایش محتوا
+                val webView = WebView(this@MainActivity).apply {
+                    layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                    )
+                    setBackgroundColor(Color.WHITE)
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.allowFileAccess = true
+                    settings.allowContentAccess = true
+                    settings.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                    webViewClient = object : WebViewClient() {
+                        override fun onReceivedError(view: WebView, errorCode: Int, description: String, failingUrl: String) {
+                            Log.e(AppConfig.TAG, "WebView error: $description, code: $errorCode, url: $failingUrl")
+                            toast("WebView error: $description")
+                        }
+
+                        override fun onPageFinished(view: WebView, url: String) {
+                            Log.d(AppConfig.TAG, "WebView finished loading: $url")
+                        }
+                    }
+                    loadUrl(url)
+                }
+                dialogContent.addView(webView)
+                container.addView(dialogContent)
+
+                // ایجاد دکمه ضربدر
+                val closeButton = ImageView(this@MainActivity).apply {
+                    layoutParams = FrameLayout.LayoutParams(80, 80).apply {
+                        gravity = GravityCompat.END
+                        topMargin = 20
+                        rightMargin = 20
+                    }
+                    setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+                    setColorFilter(Color.RED)
+                    setOnClickListener {
+                        dialog.dismiss()
+                    }
+                }
+                container.addView(closeButton)
+
+                dialog.setView(container)
+
+                // تنظیم ابعاد و موقعیت دیالوگ
+                dialog.setOnShowListener {
+                    val window = dialog.window
+                    val displayMetrics = resources.displayMetrics
+                    val width = (displayMetrics.widthPixels * 0.8).toInt()
+                    val height = (displayMetrics.heightPixels * 0.5).toInt() // ارتفاع 50% صفحه
+                    dialogContent.layoutParams = FrameLayout.LayoutParams(width, height).apply {
+                        gravity = Gravity.CENTER
+                    }
+                    window?.setLayout(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+                    window?.setBackgroundDrawableResource(android.R.color.transparent)
+                }
+
+                dialog.show()
             }
-            // Load the URL directly
-            loadUrl(url)
         }
-        container.addView(webView)
-
-        // Add close button
-        val closeButton = ImageView(this).apply {
-            layoutParams = FrameLayout.LayoutParams(80, 80).apply {
-                gravity = GravityCompat.END
-                topMargin = -40
-                rightMargin = -40
-            }
-            setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
-            setColorFilter(Color.RED)
-            setOnClickListener {
-                dialog.dismiss()
-            }
-        }
-        container.addView(closeButton)
-
-        dialog.setView(container)
-
-        // Set dialog dimensions
-        dialog.setOnShowListener {
-            val window = dialog.window
-            val displayMetrics = resources.displayMetrics
-            val width = (displayMetrics.widthPixels * 0.8).toInt()
-            val height = (displayMetrics.heightPixels * 0.8).toInt()
-            window?.setLayout(width, height)
-            window?.setBackgroundDrawableResource(android.R.color.transparent)
-        }
-
-        dialog.show()
     }
 
-    private fun updateServerList() {
+    // متد جدید برای ادامه به‌روزرسانی سرورها بدون نمایش دیالوگ
+    private fun updateServerListWithoutDialog() {
         binding.pbWaiting.show()
         isUpdatingServers = true
         binding.fab.isEnabled = false
 
         lifecycleScope.launch(Dispatchers.IO) {
-            withContext(Dispatchers.Main) {
-                // Show the dialog with the URL
-                showWebContentDialog("http://v2plusapp.wuaze.com/dialog")
-                // Proceed with server update
+            try {
                 Api.fetchAllSubscriptions()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
@@ -483,6 +521,27 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                         binding.fab.isEnabled = true
                     })
                     .let { disposables.add(it) }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    toastError("خطا در به‌روزرسانی سرورها: ${e.message}")
+                    binding.pbWaiting.hide()
+                    isUpdatingServers = false
+                    binding.fab.isEnabled = true
+                }
+                Log.e(AppConfig.TAG, "Error updating server list", e)
+            }
+        }
+    }
+
+    private fun updateServerList() {
+        binding.pbWaiting.show()
+        isUpdatingServers = true
+        binding.fab.isEnabled = false
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) {
+                // Show the dialog with the URL
+                showWebContentDialog("http://v2plusapp.wuaze.com/dialog")
             }
         }
     }
