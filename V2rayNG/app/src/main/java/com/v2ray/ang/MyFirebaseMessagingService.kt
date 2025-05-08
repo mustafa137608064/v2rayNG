@@ -1,4 +1,4 @@
-package com.v2plus.ang
+package com.v2ray.ang
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
