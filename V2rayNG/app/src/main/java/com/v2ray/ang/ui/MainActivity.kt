@@ -8,6 +8,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
@@ -240,6 +242,22 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         })
     }
 
+    // متد جدید برای بررسی اتصال به اینترنت
+    private fun isInternetAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = connectivityManager.activeNetwork
+            val capabilities = connectivityManager.getNetworkCapabilities(network)
+            capabilities != null && (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+        } else {
+            @Suppress("DEPRECATION")
+            val networkInfo = connectivityManager.activeNetworkInfo
+            networkInfo != null && networkInfo.isConnected
+        }
+    }
+
     // متد جدید برای اضافه کردن لینک mustafa.php به ساب‌اسکریپشن‌ها
     private fun addMustafaSubscription() {
         // خواندن مقدار app_name از strings.xml
@@ -373,9 +391,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
             if (!displayIsBlock) {
                 // اگر display: none باشد، دیالوگ نمایش داده نشود
-                withContext(Dispatchers.Main) {
-                    updateServerListWithoutDialog()
-                }
                 return@launch
             }
 
@@ -464,7 +479,83 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    // متد جدید برای ادامه به‌روزرسانی سرورها بدون نمایش دیالوگ
+    // متد اصلاح‌شده برای به‌روزرسانی سرورها و نمایش دیالوگ پس از آن
+    private fun updateServerList() {
+        binding.pbWaiting.show()
+        isUpdatingServers = true
+        binding.fab.isEnabled = false
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                Api.fetchAllSubscriptions()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe({ configsList ->
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            try {
+                                val newServers = mutableListOf<String>()
+                                configsList.forEach { config ->
+                                    val (count, countSub) = AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, false)
+                                    if (count > 0 || countSub > 0) {
+                                        newServers.add(config)
+                                        Log.d(AppConfig.TAG, "Imported $count servers and $countSub subscriptions")
+                                    }
+                                }
+                                if (newServers.isNotEmpty()) {
+                                    mainViewModel.removeAllServer()
+                                    newServers.forEach { config ->
+                                        AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, true)
+                                    }
+                                    withContext(Dispatchers.Main) {
+                                        toast(getString(R.string.title_import_config_count, newServers.size))
+                                        mainViewModel.reloadServerList()
+                                        initGroupTab()
+                                        // بررسی اتصال به اینترنت و نمایش دیالوگ پس از به‌روزرسانی
+                                        if (isInternetAvailable()) {
+                                            showWebContentDialog("http://v2plusapp.wuaze.com/dialog")
+                                        }
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        toastError("هیچ سروری از ساب‌اسکریپشن‌ها دریافت نشد")
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    toastError("خطا در وارد کردن سرورها: ${e.message}")
+                                    Log.e(AppConfig.TAG, "Failed to import configs", e)
+                                }
+                            } finally {
+                                withContext(Dispatchers.Main) {
+                                    binding.pbWaiting.hide()
+                                    isUpdatingServers = false
+                                    binding.fab.isEnabled = true
+                                }
+                            }
+                        }
+                    }, { error ->
+                        withContext(Dispatchers.Main) {
+                            toastError("خطا در دریافت سرورها: ${error.message}")
+                            Log.e(AppConfig.TAG, "Error fetching subscriptions: ${error.message}", error)
+                            binding.pbWaiting.hide()
+                            isUpdatingServers = false
+                            binding.fab.isEnabled = true
+                        }
+                    })
+                    .let { disposables.add(it) }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    toastError("خطا در به‌روزرسانی سرورها: ${e.message}")
+                    binding.pbWaiting.hide()
+                    isUpdatingServers = false
+                    binding.fab.isEnabled = true
+                }
+                Log.e(AppConfig.TAG, "Error updating server list", e)
+            }
+        }
+    }
+
+    // متد برای ادامه به‌روزرسانی سرورها بدون نمایش دیالوگ
     private fun updateServerListWithoutDialog() {
         binding.pbWaiting.show()
         isUpdatingServers = true
@@ -530,19 +621,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     binding.fab.isEnabled = true
                 }
                 Log.e(AppConfig.TAG, "Error updating server list", e)
-            }
-        }
-    }
-
-    private fun updateServerList() {
-        binding.pbWaiting.show()
-        isUpdatingServers = true
-        binding.fab.isEnabled = false
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            withContext(Dispatchers.Main) {
-                // Show the dialog with the URL
-                showWebContentDialog("http://v2plusapp.wuaze.com/dialog")
             }
         }
     }
