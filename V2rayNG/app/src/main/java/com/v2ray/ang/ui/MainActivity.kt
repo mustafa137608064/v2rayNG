@@ -7,9 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.Color
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
@@ -18,13 +15,6 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
-import android.view.Gravity
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.widget.FrameLayout
-import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -242,44 +232,28 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         })
     }
 
-    // متد جدید برای بررسی اتصال به اینترنت
-    private fun isInternetAvailable(): Boolean {
-        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val network = connectivityManager.activeNetwork
-            val capabilities = connectivityManager.getNetworkCapabilities(network)
-            capabilities != null && (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
-        } else {
-            @Suppress("DEPRECATION")
-            val networkInfo = connectivityManager.activeNetworkInfo
-            networkInfo != null && networkInfo.isConnected
-        }
-    }
-
     // متد جدید برای اضافه کردن لینک mustafa.php به ساب‌اسکریپشن‌ها
-    private fun addMustafaSubscription() {
-        // خواندن مقدار app_name از strings.xml
-        val appName = getString(R.string.app_name)
-        
-        // ساخت URL با استفاده از app_name
-        val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
-        
-        val existingSubscriptions = MmkvManager.decodeSubscriptions()
-        if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
-            val subscriptionId = Utils.getUuid()
-            val subscriptionItem = SubscriptionItem(
-                remarks = "$appName Subscription",
-                url = mustafaUrl,
-                enabled = true
-            )
-            MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
-            Log.d(AppConfig.TAG, "Added $appName subscription with ID: $subscriptionId")
-        } else {
-            Log.d(AppConfig.TAG, "$appName subscription already exists")
-        }
+private fun addMustafaSubscription() {
+    // خواندن مقدار app_name از strings.xml
+    val appName = getString(R.string.app_name)
+    
+    // ساخت URL با استفاده از app_name
+    val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
+    
+    val existingSubscriptions = MmkvManager.decodeSubscriptions()
+    if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
+        val subscriptionId = Utils.getUuid()
+        val subscriptionItem = SubscriptionItem(
+            remarks = "$appName Subscription",
+            url = mustafaUrl,
+            enabled = true
+        )
+        MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
+        Log.d(AppConfig.TAG, "Added $appName subscription with ID: $subscriptionId")
+    } else {
+        Log.d(AppConfig.TAG, "$appName subscription already exists")
     }
+}
 
     @SuppressLint("NotifyDataSetChanged")
     private fun setupViewModel() {
@@ -375,254 +349,61 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    // متد اصلاح‌شده برای نمایش دیالوگ با بررسی display تگ v2plusdialog
-    private fun showWebContentDialog(url: String) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            // بررسی وضعیت display تگ v2plusdialog
-            val content = try {
-                Utils.getUrlContentWithCustomUserAgent(url)
-            } catch (e: Exception) {
-                Log.e(AppConfig.TAG, "Failed to fetch dialog content: ${e.message}", e)
-                return@launch
-            }
-
-            // جستجوی تگ div با کلاس v2plusdialog
-            val displayIsBlock = content.contains("""<div class="v2plusdialog"[^>]*display\s*:\s*block""".toRegex())
-
-            if (!displayIsBlock) {
-                // اگر display: none باشد، دیالوگ نمایش داده نشود
-                return@launch
-            }
-
-            withContext(Dispatchers.Main) {
-                val dialog = AlertDialog.Builder(this@MainActivity, android.R.style.Theme_Black_NoTitleBar)
-                    .create()
-                dialog.setCancelable(false)
-
-                // ایجاد یک FrameLayout برای پس‌زمینه و محتوای دیالوگ
-                val container = FrameLayout(this@MainActivity)
-                container.setBackgroundColor(Color.argb(128, 0, 0, 0)) // مشکی با opacity 50%
-                container.setOnClickListener {
-                    dialog.dismiss() // بستن دیالوگ با کلیک روی پس‌زمینه
-                }
-
-                // ایجاد View برای محتوای دیالوگ
-                val dialogContent = FrameLayout(this@MainActivity).apply {
-                    setBackgroundColor(Color.WHITE)
-                    layoutParams = FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        gravity = Gravity.CENTER
-                    }
-                }
-
-                // ایجاد WebView برای نمایش محتوا
-                val webView = WebView(this@MainActivity).apply {
-                    layoutParams = FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT
-                    )
-                    setBackgroundColor(Color.WHITE)
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.allowFileAccess = true
-                    settings.allowContentAccess = true
-                    settings.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-                    webViewClient = object : WebViewClient() {
-                        override fun onReceivedError(view: WebView, errorCode: Int, description: String, failingUrl: String) {
-                            Log.e(AppConfig.TAG, "WebView error: $description, code: $errorCode, url: $failingUrl")
-                            toast("WebView error: $description")
-                        }
-
-                        override fun onPageFinished(view: WebView, url: String) {
-                            Log.d(AppConfig.TAG, "WebView finished loading: $url")
-                        }
-                    }
-                    loadUrl(url)
-                }
-                dialogContent.addView(webView)
-                container.addView(dialogContent)
-
-                // ایجاد دکمه ضربدر
-                val closeButton = ImageView(this@MainActivity).apply {
-                    layoutParams = FrameLayout.LayoutParams(80, 80).apply {
-                        gravity = GravityCompat.END
-                        topMargin = 20
-                        rightMargin = 20
-                    }
-                    setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
-                    setColorFilter(Color.RED)
-                    setOnClickListener {
-                        dialog.dismiss()
-                    }
-                }
-                container.addView(closeButton)
-
-                dialog.setView(container)
-
-                // تنظیم ابعاد و موقعیت دیالوگ
-                dialog.setOnShowListener {
-                    val window = dialog.window
-                    val displayMetrics = resources.displayMetrics
-                    val width = (displayMetrics.widthPixels * 0.8).toInt()
-                    val height = (displayMetrics.heightPixels * 0.5).toInt() // ارتفاع 50% صفحه
-                    dialogContent.layoutParams = FrameLayout.LayoutParams(width, height).apply {
-                        gravity = Gravity.CENTER
-                    }
-                    window?.setLayout(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
-                    window?.setBackgroundDrawableResource(android.R.color.transparent)
-                }
-
-                dialog.show()
-            }
-        }
-    }
-
-    // متد اصلاح‌شده برای به‌روزرسانی سرورها و نمایش دیالوگ پس از آن
     private fun updateServerList() {
         binding.pbWaiting.show()
         isUpdatingServers = true
         binding.fab.isEnabled = false
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                Api.fetchAllSubscriptions()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe({ configsList ->
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            try {
-                                val newServers = mutableListOf<String>()
-                                configsList.forEach { config ->
-                                    val (count, countSub) = AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, false)
-                                    if (count > 0 || countSub > 0) {
-                                        newServers.add(config)
-                                        Log.d(AppConfig.TAG, "Imported $count servers and $countSub subscriptions")
-                                    }
-                                }
-                                if (newServers.isNotEmpty()) {
-                                    mainViewModel.removeAllServer()
-                                    newServers.forEach { config ->
-                                        AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, true)
-                                    }
-                                    withContext(Dispatchers.Main) {
-                                        toast(getString(R.string.title_import_config_count, newServers.size))
-                                        mainViewModel.reloadServerList()
-                                        initGroupTab()
-                                        // بررسی اتصال به اینترنت و نمایش دیالوگ پس از به‌روزرسانی
-                                        if (isInternetAvailable()) {
-                                            showWebContentDialog("http://v2plusapp.wuaze.com/dialog")
-                                        }
-                                    }
-                                } else {
-                                    withContext(Dispatchers.Main) {
-                                        toastError("هیچ سروری از ساب‌اسکریپشن‌ها دریافت نشد")
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    toastError("خطا در وارد کردن سرورها: ${e.message}")
-                                    Log.e(AppConfig.TAG, "Failed to import configs", e)
-                                }
-                            } finally {
-                                withContext(Dispatchers.Main) {
-                                    binding.pbWaiting.hide()
-                                    isUpdatingServers = false
-                                    binding.fab.isEnabled = true
-                                }
+        Api.fetchAllSubscriptions()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ configsList ->
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        val newServers = mutableListOf<String>()
+                        configsList.forEach { config ->
+                            val (count, countSub) = AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, false)
+                            if (count > 0 || countSub > 0) {
+                                newServers.add(config)
+                                Log.d(AppConfig.TAG, "Imported $count servers and $countSub subscriptions")
                             }
                         }
-                    }, { error ->
+                        if (newServers.isNotEmpty()) {
+                            mainViewModel.removeAllServer()
+                            newServers.forEach { config ->
+                                AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, true)
+                            }
+                            withContext(Dispatchers.Main) {
+                                toast(getString(R.string.title_import_config_count, newServers.size))
+                                mainViewModel.reloadServerList()
+                                initGroupTab()
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                toastError("هیچ سروری از ساب‌اسکریپشن‌ها دریافت نشد")
+                            }
+                        }
+                    } catch (e: Exception) {
                         withContext(Dispatchers.Main) {
-                            toastError("خطا در دریافت سرورها: ${error.message}")
-                            Log.e(AppConfig.TAG, "Error fetching subscriptions: ${error.message}", error)
+                            toastError("خطا در وارد کردن سرورها: ${e.message}")
+                            Log.e(AppConfig.TAG, "Failed to import configs", e)
+                        }
+                    } finally {
+                        withContext(Dispatchers.Main) {
                             binding.pbWaiting.hide()
                             isUpdatingServers = false
                             binding.fab.isEnabled = true
                         }
-                    })
-                    .let { disposables.add(it) }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    toastError("خطا در به‌روزرسانی سرورها: ${e.message}")
-                    binding.pbWaiting.hide()
-                    isUpdatingServers = false
-                    binding.fab.isEnabled = true
+                    }
                 }
-                Log.e(AppConfig.TAG, "Error updating server list", e)
-            }
-        }
-    }
-
-    // متد برای ادامه به‌روزرسانی سرورها بدون نمایش دیالوگ
-    private fun updateServerListWithoutDialog() {
-        binding.pbWaiting.show()
-        isUpdatingServers = true
-        binding.fab.isEnabled = false
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                Api.fetchAllSubscriptions()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe({ configsList ->
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            try {
-                                val newServers = mutableListOf<String>()
-                                configsList.forEach { config ->
-                                    val (count, countSub) = AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, false)
-                                    if (count > 0 || countSub > 0) {
-                                        newServers.add(config)
-                                        Log.d(AppConfig.TAG, "Imported $count servers and $countSub subscriptions")
-                                    }
-                                }
-                                if (newServers.isNotEmpty()) {
-                                    mainViewModel.removeAllServer()
-                                    newServers.forEach { config ->
-                                        AngConfigManager.importBatchConfig(config, mainViewModel.subscriptionId, true)
-                                    }
-                                    withContext(Dispatchers.Main) {
-                                        toast(getString(R.string.title_import_config_count, newServers.size))
-                                        mainViewModel.reloadServerList()
-                                        initGroupTab()
-                                    }
-                                } else {
-                                    withContext(Dispatchers.Main) {
-                                        toastError("هیچ سروری از ساب‌اسکریپشن‌ها دریافت نشد")
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    toastError("خطا در وارد کردن سرورها: ${e.message}")
-                                    Log.e(AppConfig.TAG, "Failed to import configs", e)
-                                }
-                            } finally {
-                                withContext(Dispatchers.Main) {
-                                    binding.pbWaiting.hide()
-                                    isUpdatingServers = false
-                                    binding.fab.isEnabled = true
-                                }
-                            }
-                        }
-                    }, { error ->
-                        toastError("خطا در دریافت سرورها: ${error.message}")
-                        Log.e(AppConfig.TAG, "Error fetching subscriptions: ${error.message}", error)
-                        binding.pbWaiting.hide()
-                        isUpdatingServers = false
-                        binding.fab.isEnabled = true
-                    })
-                    .let { disposables.add(it) }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    toastError("خطا در به‌روزرسانی سرورها: ${e.message}")
-                    binding.pbWaiting.hide()
-                    isUpdatingServers = false
-                    binding.fab.isEnabled = true
-                }
-                Log.e(AppConfig.TAG, "Error updating server list", e)
-            }
-        }
+            }, { error ->
+                toastError("خطا در دریافت سرورها: ${error.message}")
+                Log.e(AppConfig.TAG, "Error fetching subscriptions: ${error.message}", error)
+                binding.pbWaiting.hide()
+                isUpdatingServers = false
+                binding.fab.isEnabled = true
+            })
+            .let { disposables.add(it) }
     }
 
     fun importConfigViaSub(): Boolean {
