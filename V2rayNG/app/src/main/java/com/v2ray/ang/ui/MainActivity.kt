@@ -28,7 +28,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.tabs.TabLayout
-import com.google.firebase.messaging.FirebaseMessaging
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.VPN
 import com.v2ray.ang.R
@@ -220,17 +219,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             }
         }
 
-        // دریافت توکن FCM
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                Log.e(AppConfig.TAG, "Failed to get FCM token: ${task.exception}")
-                return@addOnCompleteListener
-            }
-            val token = task.result
-            Log.d(AppConfig.TAG, "FCM Token: $token")
-            // در صورت نیاز، می‌توانید توکن را به سرور خود ارسال کنید
-        }
-
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -245,27 +233,27 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     // متد جدید برای اضافه کردن لینک mustafa.php به ساب‌اسکریپشن‌ها
-    private fun addMustafaSubscription() {
-        // خواندن مقدار app_name از strings.xml
-        val appName = getString(R.string.app_name)
-        
-        // ساخت URL با استفاده از app_name
-        val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
-        
-        val existingSubscriptions = MmkvManager.decodeSubscriptions()
-        if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
-            val subscriptionId = Utils.getUuid()
-            val subscriptionItem = SubscriptionItem(
-                remarks = "$appName Subscription",
-                url = mustafaUrl,
-                enabled = true
-            )
-            MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
-            Log.d(AppConfig.TAG, "Added $appName subscription with ID: $subscriptionId")
-        } else {
-            Log.d(AppConfig.TAG, "$appName subscription already exists")
-        }
+private fun addMustafaSubscription() {
+    // خواندن مقدار app_name از strings.xml
+    val appName = getString(R.string.app_name)
+    
+    // ساخت URL با استفاده از app_name
+    val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
+    
+    val existingSubscriptions = MmkvManager.decodeSubscriptions()
+    if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
+        val subscriptionId = Utils.getUuid()
+        val subscriptionItem = SubscriptionItem(
+            remarks = "$appName Subscription",
+            url = mustafaUrl,
+            enabled = true
+        )
+        MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
+        Log.d(AppConfig.TAG, "Added $appName subscription with ID: $subscriptionId")
+    } else {
+        Log.d(AppConfig.TAG, "$appName subscription already exists")
     }
+}
 
     @SuppressLint("NotifyDataSetChanged")
     private fun setupViewModel() {
