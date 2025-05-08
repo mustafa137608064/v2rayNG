@@ -158,6 +158,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         title = getString(R.string.app_name)
         setSupportActionBar(binding.toolbar)
 
+        // پردازش openUrl از Intent
+        intent.getStringExtra("openUrl")?.let { url ->
+            if (url.startsWith("http")) {
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                try {
+                    startActivity(browserIntent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
+            }
+        }
+
         binding.fab.setOnClickListener {
             if (isUpdatingServers) {
                 toast("لطفاً منتظر بمانید تا سرورها به‌روزرسانی شوند")
@@ -232,28 +244,44 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         })
     }
 
-    // متد جدید برای اضافه کردن لینک mustafa.php به ساب‌اسکریپشن‌ها
-private fun addMustafaSubscription() {
-    // خواندن مقدار app_name از strings.xml
-    val appName = getString(R.string.app_name)
-    
-    // ساخت URL با استفاده از app_name
-    val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
-    
-    val existingSubscriptions = MmkvManager.decodeSubscriptions()
-    if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
-        val subscriptionId = Utils.getUuid()
-        val subscriptionItem = SubscriptionItem(
-            remarks = "$appName Subscription",
-            url = mustafaUrl,
-            enabled = true
-        )
-        MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
-        Log.d(AppConfig.TAG, "Added $appName subscription with ID: $subscriptionId")
-    } else {
-        Log.d(AppConfig.TAG, "$appName subscription already exists")
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // پردازش openUrl از Intent جدید
+        intent?.getStringExtra("openUrl")?.let { url ->
+            if (url.startsWith("http")) {
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                try {
+                    startActivity(browserIntent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
+            }
+        }
     }
-}
+
+    // متد جدید برای اضافه کردن لینک mustafa.php به ساب‌اسکریپشن‌ها
+    private fun addMustafaSubscription() {
+        // خواندن مقدار app_name از strings.xml
+        val appName = getString(R.string.app_name)
+        
+        // ساخت URL با استفاده از app_name
+        val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
+        
+        val existingSubscriptions = MmkvManager.decodeSubscriptions()
+        if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
+            val subscriptionId = Utils.getUuid()
+            val subscriptionItem = SubscriptionItem(
+                remarks = "$appName Subscription",
+                url = mustafaUrl,
+                enabled = true
+            )
+            MmkvManager.encodeSubscription(subscriptionId, subscriptionItem)
+            Log.d(AppConfig.TAG, "Added $appName subscription with ID: $subscriptionId")
+        } else {
+            Log.d(AppConfig.TAG, "$appName subscription already exists")
+        }
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     private fun setupViewModel() {
