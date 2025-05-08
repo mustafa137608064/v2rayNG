@@ -244,11 +244,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         })
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         // پردازش openUrl از Intent جدید
-        intent?.getStringExtra("openUrl")?.let { url ->
+        intent.getStringExtra("openUrl")?.let { url ->
             if (url.startsWith("http")) {
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 try {
