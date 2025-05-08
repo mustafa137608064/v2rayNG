@@ -167,7 +167,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             if (mainViewModel.isRunning.value == true) {
                 V2RayServiceManager.stopVService(this)
             } else if ((MmkvManager.decodeSettingsString(AppConfig.PREF_MODE) ?: VPN) == VPN) {
-                val intent = VpnService.prepare>this)
+                val intent = VpnService.prepare(this)
                 if (intent == null) {
                     lifecycleScope.launch {
                         startV2Ray()
