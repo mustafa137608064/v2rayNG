@@ -12,7 +12,8 @@ import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import android.util.Log
-import com.v2ray.ang.ui.MainActivity // وارد کردن MainActivity
+import com.v2ray.ang.ui.MainActivity
+import java.net.URL // اضافه شده برای رفع خطای URL
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -50,7 +51,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val intent = if (!openUrl.isNullOrEmpty()) {
             Intent(Intent.ACTION_VIEW, Uri.parse(openUrl))
         } else {
-            Intent(this, MainActivity::class.java) // استفاده از MainActivity واردشده
+            Intent(this, MainActivity::class.java)
         }
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
@@ -64,7 +65,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         // ساخت نوتیفیکیشن
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.notification_icon)
+            .setSmallIcon(R.drawable.ic_notification_bell)
             .setContentTitle(title)
             .setContentText(messageBody)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
