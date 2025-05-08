@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "37662078595",
+    "project_id": "tellso",
+    "storage_bucket": "tellso.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:37662078595:android:23788ee0abc7524cd10db6",
+        "android_client_info": {
+          "package_name": "com.tellso.ir"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxMo8oixOLbnfC-XPOnJDNOnkMOTskRQQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:37662078595:android:746943feae403a5ad10db6",
+        "android_client_info": {
+          "package_name": "com.v2plus.ang"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxMo8oixOLbnfC-XPOnJDNOnkMOTskRQQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
