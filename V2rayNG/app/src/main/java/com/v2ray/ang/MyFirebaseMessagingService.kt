@@ -12,7 +12,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import android.util.Log
-import java.net.URL
+import com.v2ray.ang.ui.MainActivity // وارد کردن MainActivity
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -23,7 +23,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val body = remoteMessage.notification?.body ?: "New message"
         // استخراج URL تصویر و لینک کلیک از data
         val imageUrl = remoteMessage.data["imageUrl"]
-        val openUrl = remoteMessage.data["openUrl"] // کلید سفارشی برای URL
+        val openUrl = remoteMessage.data["openUrl"]
 
         sendNotification(title, body, imageUrl, openUrl)
     }
@@ -46,11 +46,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // ایجاد Intent برای باز کردن URL
+        // ایجاد Intent برای باز کردن URL یا MainActivity
         val intent = if (!openUrl.isNullOrEmpty()) {
-            Intent(Intent.ACTION_VIEW, Uri.parse(openUrl)) // باز کردن لینک در مرورگر
+            Intent(Intent.ACTION_VIEW, Uri.parse(openUrl))
         } else {
-            Intent(this, MainActivity::class.java) // در صورت عدم وجود URL، باز کردن اپلیکیشن
+            Intent(this, MainActivity::class.java) // استفاده از MainActivity واردشده
         }
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
@@ -64,12 +64,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
         // ساخت نوتیفیکیشن
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_notification_bell) // آیکون PNG
+            .setSmallIcon(R.drawable.notification_icon)
             .setContentTitle(title)
             .setContentText(messageBody)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
-            .setContentIntent(pendingIntent) // تنظیم PendingIntent برای کلیک
+            .setContentIntent(pendingIntent)
 
         // اگر URL تصویر وجود داشته باشد، تصویر را دانلود و به نوتیفیکیشن اضافه کن
         if (!imageUrl.isNullOrEmpty()) {
