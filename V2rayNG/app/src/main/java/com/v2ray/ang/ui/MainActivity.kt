@@ -18,6 +18,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.Gravity
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
@@ -211,7 +212,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         )
         binding.drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
- infestedView.setNavigationItemSelectedListener(this)
+        binding.navView.setNavigationItemSelectedListener(this)
 
         // اضافه کردن ساب‌اسکریپشن Mustafa در زمان راه‌اندازی
         addMustafaSubscription()
