@@ -4,8 +4,11 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import android.util.Log
@@ -18,17 +21,18 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // استخراج عنوان و متن از notification
         val title = remoteMessage.notification?.title ?: "Notification"
         val body = remoteMessage.notification?.body ?: "New message"
-        // استخراج URL تصویر از data (اگر وجود داشته باشد)
+        // استخراج URL تصویر و لینک کلیک از data
         val imageUrl = remoteMessage.data["imageUrl"]
+        val openUrl = remoteMessage.data["openUrl"] // کلید سفارشی برای URL
 
-        sendNotification(title, body, imageUrl)
+        sendNotification(title, body, imageUrl, openUrl)
     }
 
     override fun onNewToken(token: String) {
         Log.d("FCM", "New token: $token")
     }
 
-    private fun sendNotification(title: String, messageBody: String, imageUrl: String?) {
+    private fun sendNotification(title: String, messageBody: String, imageUrl: String?, openUrl: String?) {
         val channelId = "default_channel"
         val notificationManager = getSystemService(NotificationManager::class.java)
 
@@ -42,13 +46,30 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
+        // ایجاد Intent برای باز کردن URL
+        val intent = if (!openUrl.isNullOrEmpty()) {
+            Intent(Intent.ACTION_VIEW, Uri.parse(openUrl)) // باز کردن لینک در مرورگر
+        } else {
+            Intent(this, MainActivity::class.java) // در صورت عدم وجود URL، باز کردن اپلیکیشن
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+        // ایجاد PendingIntent برای کلیک روی نوتیفیکیشن
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         // ساخت نوتیفیکیشن
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_stat_name)
+            .setSmallIcon(R.drawable.notification_icon) // آیکون PNG
             .setContentTitle(title)
             .setContentText(messageBody)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .setContentIntent(pendingIntent) // تنظیم PendingIntent برای کلیک
 
         // اگر URL تصویر وجود داشته باشد، تصویر را دانلود و به نوتیفیکیشن اضافه کن
         if (!imageUrl.isNullOrEmpty()) {
@@ -59,18 +80,17 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                         .setStyle(
                             NotificationCompat.BigPictureStyle()
                                 .bigPicture(bitmap)
-                                .bigLargeIcon(null as Bitmap?) // اصلاح‌شده برای رفع ابهام
+                                .bigLargeIcon(null as Bitmap?)
                         )
                         .setLargeIcon(bitmap)
                 }
             } catch (e: Exception) {
                 Log.e("FCM", "Failed to download image: $e")
-                // در صورت خطا، نوتیفیکیشن بدون تصویر نمایش داده می‌شود
             }
         }
 
         // نمایش نوتیفیکیشن
-        notificationManager.notify(0, notificationBuilder.build())
+        notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
     }
 
     // متد برای دانلود تصویر از URL
