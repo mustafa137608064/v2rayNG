@@ -405,6 +405,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                                 toast(getString(R.string.title_import_config_count, newServers.size))
                                 mainViewModel.reloadServerList()
                                 initGroupTab()
+                                // فراخوانی تست پینگ واقعی برای همه سرورها
+                                toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
+                                mainViewModel.testAllRealPing()
                             }
                         } else {
                             withContext(Dispatchers.Main) {
@@ -510,98 +513,98 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        R.id.import_qrcode -> {
-            importQRcode()
+    R.id.import_qrcode -> {
+        importQRcode()
+        true
+    }
+    R.id.import_clipboard -> {
+        importClipboard()
+        true
+    }
+    R.id.import_local -> {
+        importConfigLocal()
+        true
+    }
+    R.id.import_manually_vmess -> {
+        importManually(EConfigType.VMESS.value)
+        true
+    }
+    R.id.import_manually_vless -> {
+        importManually(EConfigType.VLESS.value)
+        true
+    }
+    R.id.import_manually_ss -> {
+        importManually(EConfigType.SHADOWSOCKS.value)
+        true
+    }
+    R.id.import_manually_socks -> {
+        importManually(EConfigType.SOCKS.value)
+        true
+    }
+    R.id.import_manually_http -> {
+        importManually(EConfigType.HTTP.value)
+        true
+    }
+    R.id.import_manually_trojan -> {
+        importManually(EConfigType.TROJAN.value)
+        true
+    }
+    R.id.import_manually_wireguard -> {
+        importManually(EConfigType.WIREGUARD.value)
+        true
+    }
+    R.id.import_manually_hysteria2 -> {
+        importManually(EConfigType.HYSTERIA2.value)
+        true
+    }
+    R.id.export_all -> {
+        exportAll()
+        true
+    }
+    R.id.ping_all -> {
+        toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
+        mainViewModel.testAllTcping()
+        true
+    }
+    R.id.real_ping_all -> {
+        toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
+        mainViewModel.testAllRealPing()
+        true
+    }
+    R.id.service_restart -> {
+        restartV2Ray()
+        true
+    }
+    R.id.del_all_config -> {
+        delAllConfig()
+        true
+    }
+    R.id.del_duplicate_config -> {
+        delDuplicateConfig()
+        true
+    }
+    R.id.del_invalid_config -> {
+        delInvalidConfig()
+        true
+    }
+    R.id.sort_by_test_results -> {
+        sortByTestResults()
+        true
+    }
+    R.id.sub_update -> {
+        importConfigViaSub()
+        true
+    }
+    R.id.refresh_servers -> {
+        if (isUpdatingServers) {
+            toast("در حال به‌روزرسانی سرورها، لطفاً صبر کنید")
+            true
+        } else {
+            updateServerList()
             true
         }
-        R.id.import_clipboard -> {
-            importClipboard()
-            true
-        }
-        R.id.import_local -> {
-            importConfigLocal()
-            true
-        }
-        R.id.import_manually_vmess -> {
-            importManually(EConfigType.VMESS.value)
-            true
-        }
-        R.id.import_manually_vless -> {
-            importManually(EConfigType.VLESS.value)
-            true
-        }
-        R.id.import_manually_ss -> {
-            importManually(EConfigType.SHADOWSOCKS.value)
-            true
-        }
-        R.id.import_manually_socks -> {
-            importManually(EConfigType.SOCKS.value)
-            true
-        }
-        R.id.import_manually_http -> {
-            importManually(EConfigType.HTTP.value)
-            true
-        }
-        R.id.import_manually_trojan -> {
-            importManually(EConfigType.TROJAN.value)
-            true
-        }
-        R.id.import_manually_wireguard -> {
-            importManually(EConfigType.WIREGUARD.value)
-            true
-        }
-        R.id.import_manually_hysteria2 -> {
-            importManually(EConfigType.HYSTERIA2.value)
-            true
-        }
-        R.id.export_all -> {
-            exportAll()
-            true
-        }
-        R.id.ping_all -> {
-            toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
-            mainViewModel.testAllTcping()
-            true
-        }
-        R.id.real_ping_all -> {
-            toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
-            mainViewModel.testAllRealPing()
-            true
-        }
-        R.id.service_restart -> {
-            restartV2Ray()
-            true
-        }
-        R.id.del_all_config -> {
-            delAllConfig()
-            true
-        }
-        R.id.del_duplicate_config -> {
-            delDuplicateConfig()
-            true
-        }
-        R.id.del_invalid_config -> {
-            delInvalidConfig()
-            true
-        }
-        R.id.sort_by_test_results -> {
-            sortByTestResults()
-            true
-        }
-        R.id.sub_update -> {
-            importConfigViaSub()
-            true
-        }
-        R.id.refresh_servers -> {
-            if (isUpdatingServers) {
-                toast("در حال به‌روزرسانی سرورها، لطفاً صبر کنید")
-                true
-            } else {
-                updateServerList()
-                true
-            }
-        }
-        else -> super.onOptionsItemSelected(item)
+    }
+    else -> super.onOptionsItemSelected(item)
     }
 
     private fun importManually(createConfigType: Int) {
@@ -711,7 +714,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     }
                 }
             }
-            .setNegativeButton(android.R.string.cancel) { _, _ -> }
+            .setNegativeButton-android.R.string.cancel) { _, _ -> }
             .show()
     }
 
