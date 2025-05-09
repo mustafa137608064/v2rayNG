@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import android.util.Log
 import com.v2ray.ang.ui.MainActivity
 import java.net.URL
+import java.util.UUID
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -34,7 +35,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     private fun sendNotification(title: String, messageBody: String, imageUrl: String?, openUrl: String?) {
-        val channelId = "default_channel"
+        // ایجاد یک channelId منحصربه‌فرد برای هر نوتیفیکیشن
+        val channelId = "channel_${UUID.randomUUID()}"
         val notificationManager = getSystemService(NotificationManager::class.java)
 
         // ایجاد Notification Channel برای اندروید 8 و بالاتر
@@ -43,7 +45,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 channelId,
                 "Default Channel",
                 NotificationManager.IMPORTANCE_DEFAULT
-            )
+            ).apply {
+                setShowBadge(true) // نمایش تعداد نوتیفیکیشن‌ها در آیکون اپلیکیشن
+            }
             notificationManager.createNotificationChannel(channel)
         }
 
@@ -58,7 +62,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // ایجاد PendingIntent برای کلیک روی نوتیفیکیشن
         val pendingIntent = PendingIntent.getActivity(
             this,
-            0,
+            UUID.randomUUID().hashCode(), // استفاده از یک requestCode منحصربه‌فرد
             intent,
             PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -71,6 +75,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+
+        // غیرفعال کردن گروه‌بندی نوتیفیکیشن‌ها
+        notificationBuilder.setGroup(null) // اطمینان از عدم گروه‌بندی
 
         // اگر URL تصویر وجود داشته باشد، تصویر را دانلود و به نوتیفیکیشن اضافه کن
         if (!imageUrl.isNullOrEmpty()) {
@@ -90,8 +97,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             }
         }
 
-        // نمایش نوتیفیکیشن
-        notificationManager.notify(System.currentTimeMillis().toInt(), notificationBuilder.build())
+        // نمایش نوتیفیکیشن با یک notificationId منحصربه‌فرد
+        val notificationId = UUID.randomUUID().hashCode()
+        notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
     // متد برای دانلود تصویر از URL
