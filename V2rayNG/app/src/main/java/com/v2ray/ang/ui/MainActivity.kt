@@ -667,7 +667,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             Log.e(AppConfig.TAG, "Failed to import config from local file", e)
             return false
         }
-        return-share
+        return true
     }
 
     private fun exportAll() {
