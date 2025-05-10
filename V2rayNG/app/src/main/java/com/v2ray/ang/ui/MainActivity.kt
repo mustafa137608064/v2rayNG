@@ -411,7 +411,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                             }
                         } else {
                             withContext(Dispatchers.Main) {
-                                toastError("خطا: بروزرسانی انجام شد")
+                                toastError("خطا: بروزرسانی انجام نشد")
                             }
                         }
                     } catch (e: Exception) {
