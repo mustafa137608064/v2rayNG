@@ -850,7 +850,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             R.id.nav_tutorial_web -> {
-                val tutorialUrl = "https://tutorial.com"
+                val tutorialUrl = "http://v2plusapp.wuaze.com/tutorial/"
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tutorialUrl))
                 try {
                     startActivity(intent)
@@ -859,7 +859,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             R.id.nav_report_problem -> {
-                val reportUrl = "https://report.com"
+                val reportUrl = "http://v2plusapp.wuaze.com/report/"
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(reportUrl))
                 try {
                     startActivity(intent)
@@ -868,7 +868,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             R.id.nav_about_us -> {
-                val aboutusUrl = "https://about.com"
+                val aboutusUrl = "http://v2plusapp.wuaze.com/about/"
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(aboutusUrl))
                 try {
                     startActivity(intent)
