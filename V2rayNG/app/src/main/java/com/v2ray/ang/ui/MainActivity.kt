@@ -823,7 +823,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_telegram_channel -> {
-                val telegramUrl = "https://t.me/v2plus_vpn"
+                val telegramUrl = "tg:resolve?domain=v2plus_v2ray_vpn"
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
                 try {
                     startActivity(intent)
@@ -832,7 +832,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             R.id.nav_support_team -> {
-                val supportUrl = "https://support.com"
+                val supportUrl = "tg:resolve?domain=v2plus_admin"
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(supportUrl))
                 try {
                     startActivity(intent)
@@ -841,7 +841,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
             R.id.nav_check_update -> {
-                val updateUrl = "https://update.com"
+                val updateUrl = "http://v2plusapp.wuaze.com/update-1-9-46/"
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
                 try {
                     startActivity(intent)
