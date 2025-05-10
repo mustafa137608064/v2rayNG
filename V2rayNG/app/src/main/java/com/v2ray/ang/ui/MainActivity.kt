@@ -411,7 +411,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                             }
                         } else {
                             withContext(Dispatchers.Main) {
-                                toastError("هیچ سروری از ساب‌اسکریپشن‌ها دریافت نشد")
+                                toastError("خطا: بروزرسانی انجام شد")
                             }
                         }
                     } catch (e: Exception) {
