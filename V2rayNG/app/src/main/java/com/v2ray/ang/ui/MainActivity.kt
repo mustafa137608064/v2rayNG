@@ -83,7 +83,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         override fun onTabReselected(tab: TabLayout.Tab?) {}
     }
     private var mItemTouchHelper: ItemTouchHelper? = null
-    val mainViewModel: MainViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels()
 
     private var isUpdatingServers = false
 
@@ -122,9 +122,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     private val scanQRCodeForConfig = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
-            val server
-
- = it.data?.getStringExtra("SCAN_RESULT")
+            val server = it.data?.getStringExtra("SCAN_RESULT")
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
@@ -419,7 +417,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                             binding.pbWaiting.hide()
                             isUpdatingServers = false
                             binding.fab.isEnabled = true
-                        carbonaceous
+                        }
                     }
                 }
             }, { error ->
@@ -432,7 +430,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             .let { disposables.add(it) }
     }
 
-    fun importConfigViaSub(): Boolean {
+    private fun importConfigViaSub(): Boolean {
         try {
             toast(R.string.title_sub_update)
             MmkvManager.decodeSubscriptions().forEach {
@@ -569,7 +567,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         R.id.service_restart -> {
             restartV2Ray()
             true
-
         }
         R.id.del_all_config -> {
             delAllConfig()
