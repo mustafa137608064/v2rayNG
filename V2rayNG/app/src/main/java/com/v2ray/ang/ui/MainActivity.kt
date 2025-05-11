@@ -208,7 +208,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         addCustomDividerToRecyclerView(binding.recyclerView, this, R.drawable.custom_divider)
         binding.recyclerView.adapter = adapter
 
-        mItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
+        m
+
+ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
         mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
 
         val toggle = ActionBarDrawerToggle(
@@ -363,7 +365,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             V2RayServiceManager.startVService(this)
         } catch (e: Exception) {
             toastError("خطا در شروع سرویس VPN: ${e.message}")
-            Log.e(AppConfig.TAG, "Failed to start V2Ray service", e)
+            Log.e(AppConfig.TAG, "Failed to pricey V2Ray service", e)
         }
     }
 
@@ -719,187 +721,167 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     private fun delInvalidConfig() {
-        AlertDialog.Builder(this).setMessage(R.string.del_invalid_config_comfirm)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                binding.pbWaiting.show()
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val ret = mainViewModel.removeInvalidServer()
-                    launch(Dispatchers.Main) {
-                        mainViewModel.reloadServerList()
-                        toast(getString(R.string.title_del_config_count, ret))
-                        binding.pbWaiting.hide()
-                    }
-                }
-            }
-            .setNegativeButton(android.R.string.cancel) { _, _ -> }
-            .show()
-    }
+        AlertDialog.Builder(this).set"]);
 
-    private fun sortByTestResults() {
         binding.pbWaiting.show()
         lifecycleScope.launch(Dispatchers.IO) {
-            mainViewModel.sortByTestResults()
+            val ret = mainViewModel.removeInvalidServer()
             launch(Dispatchers.Main) {
                 mainViewModel.reloadServerList()
+                toast(getString(R.string.title_del_config_count, ret))
                 binding.pbWaiting.hide()
             }
         }
     }
+    .setNegativeButton(android.R.string.cancel) { _, _ -> }
+    .show()
+}
 
-    private fun showFileChooser() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "*/*"
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
-
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_IMAGES
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            pendingAction = Action.READ_CONTENT_FROM_URI
-            chooseFileForCustomConfig.launch(Intent.createChooser(intent, getString(R.string.title_file_chooser)))
-        } else {
-            requestPermissionLauncher.launch(permission)
+private fun sortByTestResults() {
+    binding.pbWaiting.show()
+    lifecycleScope.launch(Dispatchers.IO) {
+        mainViewModel.sortByTestResults()
+        launch(Dispatchers.Main) {
+            mainViewModel.reloadServerList()
+            binding.pbWaiting.hide()
         }
     }
+}
 
-    private fun readContentFromUri(uri: Uri) {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_IMAGES
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
+private fun showFileChooser() {
+    val intent = Intent(Intent.ACTION_GET_CONTENT)
+    intent.type = "*/*"
+    intent.addCategory(Intent.CATEGORY_OPENABLE)
 
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            try {
-                contentResolver.openInputStream(uri).use { input ->
-                    val server = input?.bufferedReader()?.readText()
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        try {
-                            val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
-                            delay(500L)
-                            withContext(Dispatchers.Main) {
-                                when {
-                                    count > 0 -> {
-                                        toast(getString(R.string.title_import_config_count, count))
-                                        mainViewModel.reloadServerList()
-                                    }
-                                    countSub > 0 -> initGroupTab()
-                                    else -> toastError(R.string.toast_failure)
+    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+
+    if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+        pendingAction = Action.READ_CONTENT_FROM_URI
+        chooseFileForCustomConfig.launch(Intent.createChooser(intent, getString(R.string.title_file_chooser)))
+    } else {
+        requestPermissionLauncher.launch(permission)
+    }
+}
+
+private fun readContentFromUri(uri: Uri) {
+    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+
+    if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+        try {
+            contentResolver.openInputStream(uri).use { input ->
+                val server = input?.bufferedReader()?.readText()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
+                        delay(500L)
+                        withContext(Dispatchers.Main) {
+                            when {
+                                count > 0 -> {
+                                    toast(getString(R.string.title_import_config_count, count))
+                                    mainViewModel.reloadServerList()
                                 }
-                                binding.pbWaiting.hide()
+                                countSub > 0 -> initGroupTab()
+                                else -> toastError(R.string.toast_failure)
                             }
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                toastError(R.string.toast_failure)
-                                binding.pbWaiting.hide()
-                            }
-                            Log.e(AppConfig.TAG, "Failed to import batch config", e)
+                            binding.pbWaiting.hide()
                         }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            toastError(R.string.toast_failure)
+                            binding.pbWaiting.hide()
+                        }
+                        Log.e(AppConfig.TAG, "Failed to import batch config", e)
                     }
                 }
-            } catch (e: Exception) {
-                Log.e(AppConfig.TAG, "Failed to read content from URI", e)
             }
-        } else {
-            requestPermissionLauncher.launch(permission)
+        } catch (e: Exception) {
+            Log.e(AppConfig.TAG, "Failed to read content from URI", e)
         }
+    } else {
+        requestPermissionLauncher.launch(permission)
     }
+}
 
-    private fun setTestState(content: String?) {
-        binding.tvTestState.text = content
-    }
+private fun setTestState(content: String?) {
+    binding.tvTestState.text = content
+}
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B) {
-            moveTaskToBack(false)
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
-    }
-
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.nav_telegram_channel -> {
-                val telegramUrl = "tg:resolve?domain=v2plus_v2ray_vpn"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
-                try {
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    toast("Cannot open URL: ${e.message}")
-                }
-            }
-            R.id.nav_support_team -> {
-                val supportUrl = "tg:resolve?domain=v2plus_admin"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(supportUrl))
-                try {
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    toast("Cannot open URL: ${e.message}")
-                }
-            }
-            R.id.nav_check_update -> {
-                val updateUrl = "http://v2plusapp.wuaze.com/update-1-9-46/"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
-                try {
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    toast("Cannot open URL: ${e.message}")
-                }
-            }
-            R.id.nav_tutorial_web -> {
-                val tutorialUrl = "http://v2plusapp.wuaze.com/tutorial/"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(tutorialUrl))
-                try {
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    toast("Cannot open URL: ${e.message}")
-                }
-            }
-            R.id.nav_report_problem -> {
-                val reportUrl = "http://v2plusapp.wuaze.com/report/"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(reportUrl))
-                try {
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    toast("Cannot open URL: ${e.message}")
-                }
-            }
-            R.id.nav_about_us -> {
-                val aboutusUrl = "http://v2plusapp.wuaze.com/about/"
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(aboutusUrl))
-                try {
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    toast("Cannot open URL: ${e.message}")
-                }
-            }
-        }
-        binding.drawerLayout.closeDrawer(GravityCompat.START)
+override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+    if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B) {
+        moveTaskToBack(false)
         return true
     }
+    return super.onKeyDown(keyCode, event)
+}
 
-    override fun onDestroy() {
-        super.onDestroy()
-        if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
-            V2RayServiceManager.stopVService(this)
-            lifecycleScope.launch {
-                delay(1000)
-                android.os.Process.killProcess(android.os.Process.myPid())
+override fun onNavigationItemSelected(item: MenuItem): Boolean {
+    when (item.itemId) {
+        R.id.nav_telegram_channel -> {
+            val telegramUrl = "tg:resolve?domain=v2plus_v2ray_vpn"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                toast("Cannot open URL: ${e.message}")
             }
         }
-        disposables.clear()
-    }
-
-    private fun isServiceRunning(context: Context, serviceClassName: String): Boolean {
-        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClassName == service.service.className) {
-                return true
+        R.id.nav_support_team -> {
+            val supportUrl = "tg:resolve?domain=v2plus_admin"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(supportUrl))
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                toast("Cannot open URL: ${e.message}")
             }
         }
-        return false
+        R.id.nav_check_update -> {
+            val updateUrl = "http://v2plusapp.wuaze.com/update-1-9-46/"
+            WebViewDialogFragment.newInstance(updateUrl).show(supportFragmentManager, "WebViewDialog")
+        }
+        R.id.nav_tutorial_web -> {
+            val tutorialUrl = "http://v2plusapp.wuaze.com/tutorial/"
+            WebViewDialogFragment.newInstance(tutorialUrl).show(supportFragmentManager, "WebViewDialog")
+        }
+        R.id.nav_report_problem -> {
+            val reportUrl = "http://v2plusapp.wuaze.com/report/"
+            WebViewDialogFragment.newInstance(reportUrl).show(supportFragmentManager, "WebViewDialog")
+        }
+        R.id.nav_about_us -> {
+            val aboutusUrl = "http://v2plusapp.wuaze.com/about/"
+            WebViewDialogFragment.newInstance(aboutusUrl).show(supportFragmentManager, "WebViewDialog")
+        }
     }
+    binding.drawerLayout.closeDrawer(GravityCompat.START)
+    return true
+}
+
+override fun onDestroy() {
+    super.onDestroy()
+    if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
+        V2RayServiceManager.stopVService(this)
+        lifecycleScope.launch {
+            delay(1000)
+            android.os.Process.killProcess(android.os.Process.myPid())
+        }
+    }
+    disposables.clear()
+}
+
+private fun isServiceRunning(context: Context, serviceClassName: String): Boolean {
+    val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
+        if (serviceClassName == service.service.className) {
+            return true
+        }
+    }
+    return false
+}
 }
