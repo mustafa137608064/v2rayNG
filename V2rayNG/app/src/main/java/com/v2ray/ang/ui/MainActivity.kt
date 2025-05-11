@@ -60,7 +60,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         ActivityMainBinding.inflate(layoutInflater)
     }
 
-    private val adapter by lazy { MainRecyclerAdapter(this) }
+    private val mainViewModel: MainViewModel by viewModels()
+    private val adapter by lazy { MainRecyclerAdapter(this, mainViewModel) }
     private val requestVpnPermission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
             lifecycleScope.launch {
@@ -83,7 +84,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         override fun onTabReselected(tab: TabLayout.Tab?) {}
     }
     private var mItemTouchHelper: ItemTouchHelper? = null
-    private val mainViewModel: MainViewModel by viewModels()
 
     private var isUpdatingServers = false
 
