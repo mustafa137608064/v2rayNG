@@ -32,4 +32,10 @@
     <style name="BrandedSwitch" parent="AppTheme">
         <item name="colorAccent">@color/color_fab_active</item>
     </style>
+
+    <style name="FullScreenDialog" parent="Theme.AppCompat.Light.NoActionBar">
+    <item name="android:windowBackground">@android:color/white</item>
+    <item name="android:windowIsFloating">false</item>
+    <item name="android:windowFullscreen">true</item>
+</style>
 </resources>
