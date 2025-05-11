@@ -48,7 +48,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.v2ray.ang.repository.Api
-import com.v2ray.ang.repository.Repositry
 import android.text.TextUtils
 import com.tencent.mmkv.MMKV
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -123,7 +122,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     private val scanQRCodeForConfig = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if (it.resultCode == RESULT_OK) {
-            val server = it.data?.getStringExtra("SCAN_RESULT")
+            val server
+
+ = it.data?.getStringExtra("SCAN_RESULT")
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
@@ -158,7 +159,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         title = getString(R.string.app_name)
         setSupportActionBar(binding.toolbar)
 
-        // پردازش openUrl از Intent
+        // Process openUrl from Intent
         intent.getStringExtra("openUrl")?.let { url ->
             if (url.startsWith("http")) {
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -208,9 +209,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         addCustomDividerToRecyclerView(binding.recyclerView, this, R.drawable.custom_divider)
         binding.recyclerView.adapter = adapter
 
-        m
-
-ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
+        mItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
         mItemTouchHelper?.attachToRecyclerView(binding.recyclerView)
 
         val toggle = ActionBarDrawerToggle(
@@ -220,7 +219,7 @@ ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
         toggle.syncState()
         binding.navView.setNavigationItemSelectedListener(this)
 
-        // اضافه کردن ساب‌اسکریپشن Mustafa در زمان راه‌اندازی
+        // Add Mustafa subscription on startup
         addMustafaSubscription()
         initGroupTab()
         setupViewModel()
@@ -249,7 +248,7 @@ ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // پردازش openUrl از Intent جدید
+        // Process openUrl from new Intent
         intent.getStringExtra("openUrl")?.let { url ->
             if (url.startsWith("http")) {
                 val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -262,14 +261,9 @@ ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
         }
     }
 
-    // متد جدید برای اضافه کردن لینک mustafa.php به ساب‌اسکریپشن‌ها
     private fun addMustafaSubscription() {
-        // خواندن مقدار app_name از strings.xml
         val appName = getString(R.string.app_name)
-        
-        // ساخت URL با استفاده از app_name
         val mustafaUrl = "https://raw.githubusercontent.com/mustafa137608064/subdr/refs/heads/main/users/$appName.php"
-        
         val existingSubscriptions = MmkvManager.decodeSubscriptions()
         if (existingSubscriptions.none { it.second.url == mustafaUrl }) {
             val subscriptionId = Utils.getUuid()
@@ -365,7 +359,7 @@ ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
             V2RayServiceManager.startVService(this)
         } catch (e: Exception) {
             toastError("خطا در شروع سرویس VPN: ${e.message}")
-            Log.e(AppConfig.TAG, "Failed to pricey V2Ray service", e)
+            Log.e(AppConfig.TAG, "Failed to start V2Ray service", e)
         }
     }
 
@@ -407,7 +401,6 @@ ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
                                 toast(getString(R.string.title_import_config_count, newServers.size))
                                 mainViewModel.reloadServerList()
                                 initGroupTab()
-                                // فراخوانی تست پینگ واقعی برای همه سرورها
                                 toast(getString(R.string.connection_test_testing_count, mainViewModel.serversCache.count()))
                                 mainViewModel.testAllRealPing()
                             }
@@ -426,7 +419,7 @@ ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
                             binding.pbWaiting.hide()
                             isUpdatingServers = false
                             binding.fab.isEnabled = true
-                        }
+                        carbonaceous
                     }
                 }
             }, { error ->
@@ -576,6 +569,7 @@ ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
         R.id.service_restart -> {
             restartV2Ray()
             true
+
         }
         R.id.del_all_config -> {
             delAllConfig()
@@ -721,167 +715,167 @@ ItemTouchHelper = ItemTouchHelper(SimpleItemTouchHelperCallback(adapter))
     }
 
     private fun delInvalidConfig() {
-        AlertDialog.Builder(this).set"]);
+        AlertDialog.Builder(this).setMessage(R.string.del_invalid_config_comfirm)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                binding.pbWaiting.show()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val ret = mainViewModel.removeInvalidServer()
+                    launch(Dispatchers.Main) {
+                        mainViewModel.reloadServerList()
+                        toast(getString(R.string.title_del_config_count, ret))
+                        binding.pbWaiting.hide()
+                    }
+                }
+            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> }
+            .show()
+    }
 
+    private fun sortByTestResults() {
         binding.pbWaiting.show()
         lifecycleScope.launch(Dispatchers.IO) {
-            val ret = mainViewModel.removeInvalidServer()
+            mainViewModel.sortByTestResults()
             launch(Dispatchers.Main) {
                 mainViewModel.reloadServerList()
-                toast(getString(R.string.title_del_config_count, ret))
                 binding.pbWaiting.hide()
             }
         }
     }
-    .setNegativeButton(android.R.string.cancel) { _, _ -> }
-    .show()
-}
 
-private fun sortByTestResults() {
-    binding.pbWaiting.show()
-    lifecycleScope.launch(Dispatchers.IO) {
-        mainViewModel.sortByTestResults()
-        launch(Dispatchers.Main) {
-            mainViewModel.reloadServerList()
-            binding.pbWaiting.hide()
+    private fun showFileChooser() {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = "*/*"
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            pendingAction = Action.READ_CONTENT_FROM_URI
+            chooseFileForCustomConfig.launch(Intent.createChooser(intent, getString(R.string.title_file_chooser)))
+        } else {
+            requestPermissionLauncher.launch(permission)
         }
     }
-}
 
-private fun showFileChooser() {
-    val intent = Intent(Intent.ACTION_GET_CONTENT)
-    intent.type = "*/*"
-    intent.addCategory(Intent.CATEGORY_OPENABLE)
+    private fun readContentFromUri(uri: Uri) {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
 
-    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    }
-
-    if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-        pendingAction = Action.READ_CONTENT_FROM_URI
-        chooseFileForCustomConfig.launch(Intent.createChooser(intent, getString(R.string.title_file_chooser)))
-    } else {
-        requestPermissionLauncher.launch(permission)
-    }
-}
-
-private fun readContentFromUri(uri: Uri) {
-    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    }
-
-    if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-        try {
-            contentResolver.openInputStream(uri).use { input ->
-                val server = input?.bufferedReader()?.readText()
-                lifecycleScope.launch(Dispatchers.IO) {
-                    try {
-                        val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
-                        delay(500L)
-                        withContext(Dispatchers.Main) {
-                            when {
-                                count > 0 -> {
-                                    toast(getString(R.string.title_import_config_count, count))
-                                    mainViewModel.reloadServerList()
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            try {
+                contentResolver.openInputStream(uri).use { input ->
+                    val server = input?.bufferedReader()?.readText()
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        try {
+                            val (count, countSub) = AngConfigManager.importBatchConfig(server, mainViewModel.subscriptionId, true)
+                            delay(500L)
+                            withContext(Dispatchers.Main) {
+                                when {
+                                    count > 0 -> {
+                                        toast(getString(R.string.title_import_config_count, count))
+                                        mainViewModel.reloadServerList()
+                                    }
+                                    countSub > 0 -> initGroupTab()
+                                    else -> toastError(R.string.toast_failure)
                                 }
-                                countSub > 0 -> initGroupTab()
-                                else -> toastError(R.string.toast_failure)
+                                binding.pbWaiting.hide()
                             }
-                            binding.pbWaiting.hide()
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                toastError(R.string.toast_failure)
+                                binding.pbWaiting.hide()
+                            }
+                            Log.e(AppConfig.TAG, "Failed to import batch config", e)
                         }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            toastError(R.string.toast_failure)
-                            binding.pbWaiting.hide()
-                        }
-                        Log.e(AppConfig.TAG, "Failed to import batch config", e)
                     }
                 }
-            }
-        } catch (e: Exception) {
-            Log.e(AppConfig.TAG, "Failed to read content from URI", e)
-        }
-    } else {
-        requestPermissionLauncher.launch(permission)
-    }
-}
-
-private fun setTestState(content: String?) {
-    binding.tvTestState.text = content
-}
-
-override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-    if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B) {
-        moveTaskToBack(false)
-        return true
-    }
-    return super.onKeyDown(keyCode, event)
-}
-
-override fun onNavigationItemSelected(item: MenuItem): Boolean {
-    when (item.itemId) {
-        R.id.nav_telegram_channel -> {
-            val telegramUrl = "tg:resolve?domain=v2plus_v2ray_vpn"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
-            try {
-                startActivity(intent)
             } catch (e: Exception) {
-                toast("Cannot open URL: ${e.message}")
+                Log.e(AppConfig.TAG, "Failed to read content from URI", e)
             }
-        }
-        R.id.nav_support_team -> {
-            val supportUrl = "tg:resolve?domain=v2plus_admin"
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(supportUrl))
-            try {
-                startActivity(intent)
-            } catch (e: Exception) {
-                toast("Cannot open URL: ${e.message}")
-            }
-        }
-        R.id.nav_check_update -> {
-            val updateUrl = "http://v2plusapp.wuaze.com/update-1-9-46/"
-            WebViewDialogFragment.newInstance(updateUrl).show(supportFragmentManager, "WebViewDialog")
-        }
-        R.id.nav_tutorial_web -> {
-            val tutorialUrl = "http://v2plusapp.wuaze.com/tutorial/"
-            WebViewDialogFragment.newInstance(tutorialUrl).show(supportFragmentManager, "WebViewDialog")
-        }
-        R.id.nav_report_problem -> {
-            val reportUrl = "http://v2plusapp.wuaze.com/report/"
-            WebViewDialogFragment.newInstance(reportUrl).show(supportFragmentManager, "WebViewDialog")
-        }
-        R.id.nav_about_us -> {
-            val aboutusUrl = "http://v2plusapp.wuaze.com/about/"
-            WebViewDialogFragment.newInstance(aboutusUrl).show(supportFragmentManager, "WebViewDialog")
+        } else {
+            requestPermissionLauncher.launch(permission)
         }
     }
-    binding.drawerLayout.closeDrawer(GravityCompat.START)
-    return true
-}
 
-override fun onDestroy() {
-    super.onDestroy()
-    if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
-        V2RayServiceManager.stopVService(this)
-        lifecycleScope.launch {
-            delay(1000)
-            android.os.Process.killProcess(android.os.Process.myPid())
-        }
+    private fun setTestState(content: String?) {
+        binding.tvTestState.text = content
     }
-    disposables.clear()
-}
 
-private fun isServiceRunning(context: Context, serviceClassName: String): Boolean {
-    val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-    for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
-        if (serviceClassName == service.service.className) {
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B) {
+            moveTaskToBack(false)
             return true
         }
+        return super.onKeyDown(keyCode, event)
     }
-    return false
-}
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_telegram_channel -> {
+                val telegramUrl = "tg:resolve?domain=v2plus_v2ray_vpn"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(telegramUrl))
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
+            }
+            R.id.nav_support_team -> {
+                val supportUrl = "tg:resolve?domain=v2plus_admin"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(supportUrl))
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    toast("Cannot open URL: ${e.message}")
+                }
+            }
+            R.id.nav_check_update -> {
+                val updateUrl = "http://v2plusapp.wuaze.com/update-1-9-46/"
+                WebViewDialogFragment.newInstance(updateUrl).show(supportFragmentManager, "WebViewDialog")
+            }
+            R.id.nav_tutorial_web -> {
+                val tutorialUrl = "http://v2plusapp.wuaze.com/tutorial/"
+                WebViewDialogFragment.newInstance(tutorialUrl).show(supportFragmentManager, "WebViewDialog")
+            }
+            R.id.nav_report_problem -> {
+                val reportUrl = "http://v2plusapp.wuaze.com/report/"
+                WebViewDialogFragment.newInstance(reportUrl).show(supportFragmentManager, "WebViewDialog")
+            }
+            R.id.nav_about_us -> {
+                val aboutusUrl = "http://v2plusapp.wuaze.com/about/"
+                WebViewDialogFragment.newInstance(aboutusUrl).show(supportFragmentManager, "WebViewDialog")
+            }
+        }
+        binding.drawerLayout.closeDrawer(GravityCompat.START)
+        return true
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isServiceRunning(this, "com.v2ray.ang.service.V2RayVpnService")) {
+            V2RayServiceManager.stopVService(this)
+            lifecycleScope.launch {
+                delay(1000)
+                android.os.Process.killProcess(android.os.Process.myPid())
+            }
+        }
+        disposables.clear()
+    }
+
+    private fun isServiceRunning(context: Context, serviceClassName: String): Boolean {
+        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClassName == service.service.className) {
+                return true
+            }
+        }
+        return false
+    }
 }
