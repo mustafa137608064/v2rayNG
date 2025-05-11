@@ -8,7 +8,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.fragment.app.DialogFragment
 import com.v2ray.ang.R
-import com.v2ray.ang.databinding.DialogWebviewBinding
 
 class WebViewDialogFragment : DialogFragment() {
 
@@ -24,9 +23,6 @@ class WebViewDialogFragment : DialogFragment() {
         }
     }
 
-    private var _binding: DialogWebviewBinding? = null
-    private val binding get() = _binding!!
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_TITLE, R.style.FullScreenDialog)
@@ -36,29 +32,18 @@ class WebViewDialogFragment : DialogFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        _binding = DialogWebviewBinding.inflate(inflater, container, false)
-        val view = binding.root
+    ): View? {
+        val view = inflater.inflate(R.layout.dialog_webview, container, false)
+        val webView = view.findViewById<WebView>(R.id.webview)
         val url = arguments?.getString(ARG_URL) ?: ""
-
-        binding.webview.webViewClient = WebViewClient()
-        binding.webview.settings.javaScriptEnabled = true
-        binding.webview.loadUrl(url)
-
-        binding.btnClose.setOnClickListener {
-            dismiss()
-        }
-
+        webView.webViewClient = WebViewClient()
+        webView.settings.javaScriptEnabled = true
+        webView.loadUrl(url)
         return view
     }
 
     override fun onStart() {
         super.onStart()
         dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }
