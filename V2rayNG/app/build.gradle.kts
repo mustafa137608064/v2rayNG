@@ -17,14 +17,22 @@ android {
         versionName = "1.10.0"
         multiDexEnabled = true
 
+        val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
         splits {
             abi {
                 isEnable = true
                 reset()
-                // شامل تمام معماری‌های مورد نظر
-                include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
-                // همیشه نسخه universal تولید شود
-                isUniversalApk = true
+                if (abiFilterList != null && abiFilterList.isNotEmpty()) {
+                    include(*abiFilterList.toTypedArray())
+                } else {
+                    include(
+                        "arm64-v8a",
+                        "armeabi-v7a",
+                        "x86_64",
+                        "x86"
+                    )
+                }
+                isUniversalApk = abiFilterList.isNullOrEmpty()
             }
         }
 
@@ -164,6 +172,6 @@ dependencies {
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
     implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-messaging")
-    implementation("com.github.bumptech.glide:glide:4.16.0")
+implementation("com.google.firebase:firebase-messaging")
+implementation("com.github.bumptech.glide:glide:4.16.0")
 }
