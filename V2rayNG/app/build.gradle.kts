@@ -23,16 +23,14 @@ android {
                 isEnable = true
                 reset()
                 if (abiFilterList != null && abiFilterList.isNotEmpty()) {
+                    // تولید APKهای خاص برای معماری‌های مشخص‌شده
                     include(*abiFilterList.toTypedArray())
+                    isUniversalApk = false
                 } else {
-                    include(
-                        "arm64-v8a",
-                        "armeabi-v7a",
-                        "x86_64",
-                        "x86"
-                    )
+                    // تولید APK universal شامل تمام معماری‌ها
+                    include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+                    isUniversalApk = true
                 }
-                isUniversalApk = abiFilterList.isNullOrEmpty()
             }
         }
 
@@ -172,6 +170,6 @@ dependencies {
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
     implementation("com.google.firebase:firebase-analytics")
-implementation("com.google.firebase:firebase-messaging")
-implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }
