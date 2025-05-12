@@ -17,20 +17,14 @@ android {
         versionName = "1.10.0"
         multiDexEnabled = true
 
-        val abiFilterList = (properties["ABI_FILTERS"] as? String)?.split(';')
         splits {
             abi {
                 isEnable = true
                 reset()
-                if (abiFilterList != null && abiFilterList.isNotEmpty()) {
-                    // تولید APKهای خاص برای معماری‌های مشخص‌شده
-                    include(*abiFilterList.toTypedArray())
-                    isUniversalApk = false
-                } else {
-                    // تولید APK universal شامل تمام معماری‌ها
-                    include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
-                    isUniversalApk = true
-                }
+                // شامل تمام معماری‌های مورد نظر
+                include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+                // همیشه نسخه universal تولید شود
+                isUniversalApk = true
             }
         }
 
