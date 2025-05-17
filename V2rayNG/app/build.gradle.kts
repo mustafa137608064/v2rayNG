@@ -82,8 +82,7 @@ android {
             .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
             .forEach { output ->
                 val abi = output.getFilter("ABI") ?: "universal"
-                def appName = getAppName().replace(" ", "_")
-                output.outputFileName = "${appName}_${variant.versionName}-fdroid_${abi}.apk"
+                output.outputFileName = "v2rayNG_${variant.versionName}-fdroid_${abi}.apk"
                 if (versionCodes.containsKey(abi)) {
                     output.versionCodeOverride = (100 * variant.versionCode + versionCodes[abi]!!).plus(5000000)
                 }
@@ -102,21 +101,9 @@ android {
     }
 }
 
-def getAppName() {
-    try {
-        def stringsFile = file("src/main/res/values/strings.xml")
-        def parsedXml = new XmlParser().parse(stringsFile)
-        def appNameNode = parsedXml.string.find { it.@name == "app_name" }
-        return appNameNode?.text() ?: "v2rayNG"
-    } catch (Exception e) {
-        println("Error reading app_name from strings.xml: ${e.message}")
-        return "v2rayNG"
-    }
-}
-
 dependencies {
     // Core Libraries
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar", "*.jar")))
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar", "*.jar"))))
 
     // AndroidX Core Libraries
     implementation(libs.androidx.core.ktx)
@@ -185,6 +172,6 @@ dependencies {
     // Import the Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
     implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-messaging")
-    implementation("com.github.bumptech.glide:glide:4.16.0")
+implementation("com.google.firebase:firebase-messaging")
+implementation("com.github.bumptech.glide:glide:4.16.0")
 }
